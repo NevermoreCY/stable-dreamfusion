@@ -2,6 +2,8 @@ from transformers import CLIPTextModel, CLIPTokenizer, logging
 from diffusers import AutoencoderKL, UNet2DConditionModel, PNDMScheduler, DDIMScheduler, StableDiffusionPipeline
 from diffusers.utils.import_utils import is_xformers_available
 from os.path import isfile
+from diffusers import StableDiffusionControlNetPipeline, ControlNetModel
+
 
 # suppress partial model loading warning
 logging.set_verbosity_error()
@@ -63,7 +65,12 @@ class StableDiffusion(nn.Module):
         self.precision_t = torch.float16 if fp16 else torch.float32
 
         # Create model
-        pipe = StableDiffusionPipeline.from_pretrained(model_key, torch_dtype=self.precision_t)
+        print("*****model key and torch_dtype is ", model_key, self.precision_t)
+        # pipe = StableDiffusionPipeline.from_pretrained(model_key, torch_dtype=self.precision_t)
+        controlnet = ControlNetModel.from_pretrained("lllyasviel/sd-controlnet-canny", torch_dtype=torch.float16)
+        pipe = StableDiffusionControlNetPipeline.from_pretrained(
+            "runwayml/stable-diffusion-v1-5", controlnet=controlnet, torch_dtype=torch.float16
+        )
 
         if isfile('./unet_traced.pt'):
             # use jitted unet
@@ -92,7 +99,7 @@ class StableDiffusion(nn.Module):
         self.tokenizer = pipe.tokenizer
         self.text_encoder = pipe.text_encoder
         self.unet = pipe.unet
-
+        # print("**** pipe unet is ",  pipe.unet)
         self.scheduler = DDIMScheduler.from_pretrained(model_key, subfolder="scheduler", torch_dtype=self.precision_t)
 
         self.num_train_timesteps = self.scheduler.config.num_train_timesteps
@@ -105,17 +112,49 @@ class StableDiffusion(nn.Module):
     @torch.no_grad()
     def get_text_embeds(self, prompt):
         # prompt, negative_prompt: [str]
-
+        # print("******get_text_embeds prompt" , prompt)
         # positive
         inputs = self.tokenizer(prompt, padding='max_length', max_length=self.tokenizer.model_max_length, return_tensors='pt')
+
+        # print("******get_text_embeds after tokenizer", inputs)
+        # [49406,   320, 43758,   49407,     0,     0,  ....   0,     0,     0,     0]
+        #  start     a    hot_dog  end
+
+        # print("******get_text_embeds input shape", inputs['input_ids'].shape)
+        # 1 x 77 , the maxsize for embedding is 77 words
+
         embeddings = self.text_encoder(inputs.input_ids.to(self.device))[0]
+
+        # print("******get_text_embeds embeddings", embeddings.shape)
+        # size = 77 x 1024
+        # each word is mapped to a 1024 dimension embeddings
+
 
         return embeddings
 
 
-    def train_step(self, text_embeddings, pred_rgb, guidance_scale=100, as_latent=False, grad_scale=1):
-        
+    def train_step(self, text_embeddings, pred_rgb,guidance_scale=100, as_latent=False, grad_scale=1):
+
+        print("********as_latent", as_latent)
+
+        print("analyze the images")
+        # print(pred_rgb.shape, pred_rgb )
+
+        # os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        #
+        # pred = preds[0].detach().cpu().numpy()
+        # pred = (pred * 255).astype(np.uint8)
+        #
+        # pred_depth = preds_depth[0].detach().cpu().numpy()
+        # pred_depth = (pred_depth - pred_depth.min()) / (pred_depth.max() - pred_depth.min() + 1e-6)
+        # pred_depth = (pred_depth * 255).astype(np.uint8)
+        #
+        # cv2.imwrite(save_path, cv2.cvtColor(pred, cv2.COLOR_RGB2BGR))
+        # cv2.imwrite(save_path_depth, pred_depth)
+
+        # pred
         if as_latent:
+
             latents = F.interpolate(pred_rgb, (64, 64), mode='bilinear', align_corners=False) * 2 - 1
         else:
             # interp to 512x512 to be fed into vae.
@@ -124,25 +163,30 @@ class StableDiffusion(nn.Module):
             latents = self.encode_imgs(pred_rgb_512)
 
         # timestep ~ U(0.02, 0.98) to avoid very high/low noise level
+        print("self.min_step, " , self.min_step , "self.max_step ," , self.max_step )
         t = torch.randint(self.min_step, self.max_step + 1, [1], dtype=torch.long, device=self.device)
 
         # predict the noise residual with unet, NO grad!
         with torch.no_grad():
             # add noise
-            noise = torch.randn_like(latents)
+            noise = torch.randn_like(latents)  # standard normal distribution
             latents_noisy = self.scheduler.add_noise(latents, noise, t)
+            print("latents_noisy shape", latents_noisy.shape)
             # pred noise
             latent_model_input = torch.cat([latents_noisy] * 2)
+            print("latents_noisy shape after concatetion ", latent_model_input.shape)
             # Save input tensors for UNet
-            #torch.save(latent_model_input, "train_latent_model_input.pt")
-            #torch.save(t, "train_t.pt")
-            #torch.save(text_embeddings, "train_text_embeddings.pt")
             noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
+            print("noise_pred shape  ", noise_pred.shape)
 
         # perform guidance (high scale from paper!)
         noise_pred_uncond, noise_pred_pos = noise_pred.chunk(2)
 
+        print("s1", noise_pred_uncond.shape, "s2", noise_pred_pos.shape)
+
+
         noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_pos - noise_pred_uncond)
+        print(guidance_scale, noise_pred.shape)
         
 
         # import kiui
@@ -160,12 +204,15 @@ class StableDiffusion(nn.Module):
         # kiui.vis.plot_image(imgs)
 
         # w(t), sigma_t^2
+        print(self.alphas[t])
         w = (1 - self.alphas[t])
         grad = grad_scale * w * (noise_pred - noise)
         grad = torch.nan_to_num(grad)
 
         # since we omitted an item in grad, we need to use the custom function to specify the gradient
         loss = SpecifyGradient.apply(latents, grad)
+
+        print("loss : " ,  loss.shape, loss)
 
         return loss
 

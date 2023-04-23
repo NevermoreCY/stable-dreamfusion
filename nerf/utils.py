@@ -185,7 +185,7 @@ class Trainer(object):
 
         # text prompt
         if self.guidance is not None:
-            print("*********** guidance is not None , freeze parameters and prepare embeddings")
+            # print("*********** guidance is not None , freeze parameters and prepare embeddings")
             for p in self.guidance.parameters():
                 p.requires_grad = False
             self.prepare_embeddings()
@@ -272,7 +272,7 @@ class Trainer(object):
         
         # text embeddings (stable-diffusion)
         if self.opt.text is not None:
-            print("******* prepare embeddings for text_z :")
+            # print("******* prepare embeddings for text_z :")
             self.text_z = {}
 
             self.text_z['default'] = self.guidance.get_text_embeds([self.opt.text])
@@ -285,7 +285,7 @@ class Trainer(object):
         
         if self.opt.image is not None:
 
-            print("******* we have image input? ")
+            # print("******* we have image input? ")
 
             h = int(self.opt.known_view_scale * self.opt.h)
             w = int(self.opt.known_view_scale * self.opt.w)
@@ -315,7 +315,7 @@ class Trainer(object):
                 self.image_z = None
         
         else:
-            print("******* we dont have image input ")
+            # print("******* we dont have image input ")
             self.image_z = None
 
     def __del__(self):
@@ -326,7 +326,7 @@ class Trainer(object):
     def log(self, *args, **kwargs):
         if self.local_rank == 0:
             if not self.mute: 
-                #print(*args)
+                print(*args)
                 self.console.print(*args, **kwargs)
             if self.log_ptr: 
                 print(*args, file=self.log_ptr)
@@ -413,9 +413,9 @@ class Trainer(object):
         pred_depth = pred_depth.repeat(1,4,1,1)
 
         #TODO check mask , depth, image
-        print("**** prediction depth shape" ,pred_depth.shape, torch.max(pred_depth) , torch.min(pred_depth))
-        print("**** prediction mask shape", pred_mask.shape, torch.max(pred_mask) , torch.min(pred_mask))
-
+        # print("**** prediction depth shape" ,pred_depth.shape, torch.max(pred_depth) , torch.min(pred_depth))
+        # print("**** prediction mask shape", pred_mask.shape, torch.max(pred_mask) , torch.min(pred_mask))
+        #
         if as_latent:
             # abuse normal & mask as latent code for faster geometry initialization (ref: fantasia3D)
             pred_rgb = torch.cat([outputs['image'], outputs['weights_sum'].unsqueeze(-1)], dim=-1).reshape(B, H, W, 4).permute(0, 3, 1, 2).contiguous() # [1, 4, H, W]
@@ -423,7 +423,7 @@ class Trainer(object):
             pred_rgb = outputs['image'].reshape(B, H, W, 3).permute(0, 3, 1, 2).contiguous() # [1, 3, H, W]
 
         # known view loss
-        print("do rgbd loss ? " , do_rgbd_loss)  # default is false
+        # print("do rgbd loss ? " , do_rgbd_loss)  # default is false
         if do_rgbd_loss:
             gt_mask = self.mask # [H, W]
             gt_rgb = self.rgb # [3, H, W]
@@ -827,13 +827,13 @@ class Trainer(object):
 
             self.optimizer.zero_grad()
 
-            print("***** train_one_epoch  data has keys ", data.keys())
+            # print("***** train_one_epoch  data has keys ", data.keys())
             with torch.cuda.amp.autocast(enabled=self.fp16):
                 pred_rgbs, pred_depths, loss = self.train_step(data)
 
-            print("****** train one step ", pred_rgbs.shape, pred_depths.shape)
-            print("****** max min rgb ", torch.max(pred_rgbs), torch.min(pred_rgbs))
-            print("****** max min depth ", torch.max(pred_depths), torch.min(pred_depths))
+            # print("****** train one step ", pred_rgbs.shape, pred_depths.shape)
+            # print("****** max min rgb ", torch.max(pred_rgbs), torch.min(pred_rgbs))
+            # print("****** max min depth ", torch.max(pred_depths), torch.min(pred_depths))
 
 
             # hooked grad clipping for RGB space
@@ -928,7 +928,7 @@ class Trainer(object):
                 with torch.cuda.amp.autocast(enabled=self.fp16):
                     preds, preds_depth, loss = self.eval_step(data)
 
-                    print("****** eval preds" , preds.shape, preds_depth.shape )
+                    # print("****** eval preds" , preds.shape, preds_depth.shape )
 
                 # all_gather/reduce the statistics (NCCL only support all_*)
                 if self.world_size > 1:
@@ -958,7 +958,7 @@ class Trainer(object):
 
                     pred = preds[0].detach().cpu().numpy()
                     pred = (pred * 255).astype(np.uint8)
-                    print("****** to save pred shape ", pred.shape)
+                    # print("****** to save pred shape ", pred.shape)
 
                     pred_depth = preds_depth[0].detach().cpu().numpy()
                     pred_depth = (pred_depth - pred_depth.min()) / (pred_depth.max() - pred_depth.min() + 1e-6)

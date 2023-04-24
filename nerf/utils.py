@@ -409,6 +409,15 @@ class Trainer(object):
 
         outputs = self.model.render(rays_o, rays_d, mvp, H, W, staged=False, perturb=True, bg_color=bg_color, ambient_ratio=ambient_ratio, shading=shading, binarize=binarize)
         pred_depth = outputs['depth'].reshape(B, 1, H, W)
+        # normalize
+        pred_depth = (pred_depth - pred_depth.min()) / (pred_depth.max() - pred_depth.min() + 1e-6)
+
+        # print("^^^max min " , torch.max(pred_depth_norm), torch.min(pred_depth_norm))
+        # pred_depth = (pred_depth * 255).astype(np.uint8)
+
+        pred_depth = (pred_depth*-1) + torch.max(pred_depth)
+        print("minus max\n ")
+
         pred_mask = outputs['weights_sum'].reshape(B, 1, H, W)
         pred_depth = pred_depth.repeat(1,4,1,1)
 
@@ -472,7 +481,7 @@ class Trainer(object):
                 pos_z = r * start_z + (1 - r) * end_z
                 uncond_z = self.text_z['uncond']
                 text_z = torch.cat([uncond_z, pos_z], dim=0)
-                loss = self.guidance.train_step(text_z, pred_rgb,pred_depth = pred_depth, as_latent=as_latent, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
+                loss = self.guidance.train_step(text_z, pred_rgb, pred_depth , outputs['image'] ,azimuth, as_latent=as_latent, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
 
             else: # zero123
                 polar = data['polar']
@@ -657,6 +666,8 @@ class Trainer(object):
                 pred_depth = preds_depth[0].detach().cpu().numpy()
                 pred_depth = (pred_depth - pred_depth.min()) / (pred_depth.max() - pred_depth.min() + 1e-6)
                 pred_depth = (pred_depth * 255).astype(np.uint8)
+                # match style
+                pred_depth = (255 - pred_depth).astype(np.uint8)
 
                 if write_video:
                     all_preds.append(pred)
@@ -962,7 +973,15 @@ class Trainer(object):
 
                     pred_depth = preds_depth[0].detach().cpu().numpy()
                     pred_depth = (pred_depth - pred_depth.min()) / (pred_depth.max() - pred_depth.min() + 1e-6)
+
                     pred_depth = (pred_depth * 255).astype(np.uint8)
+
+                    # match style
+
+                    pred_depth = (255 -pred_depth).astype(np.uint8)
+
+
+
                     
                     cv2.imwrite(save_path, cv2.cvtColor(pred, cv2.COLOR_RGB2BGR))
                     cv2.imwrite(save_path_depth, pred_depth)

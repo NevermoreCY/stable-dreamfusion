@@ -6,6 +6,7 @@ from nerf.provider import NeRFDataset
 from nerf.utils import *
 
 from nerf.gui import NeRFGUI
+from process_control import *
 
 # torch.autograd.set_detect_anomaly(True)
 
@@ -56,9 +57,15 @@ if __name__ == '__main__':
     parser.add_argument('--density_thresh', type=float, default=0.1, help="threshold for density grid to be occupied")
     parser.add_argument('--blob_density', type=float, default=10, help="max (center) density for the density blob")
     parser.add_argument('--blob_radius', type=float, default=0.5, help="control the radius for the density blob")
-    # we add two arguments
+    # ************extra argument for Control-3D *******************
     parser.add_argument('--control', type=bool, default=False, help="whether or not use control")
     parser.add_argument('--neus', type=bool, default=False, help="whether or not use neus")
+    parser.add_argument('--image_control', type=str, default=None, help="the input image for control")
+    parser.add_argument('--control_type', type=str, default=None, help="control type")
+
+
+
+
     # network backbone
     parser.add_argument('--backbone', type=str, default='grid', choices=['grid', 'vanilla', 'grid_taichi'], help="nerf backbone")
     parser.add_argument('--optim', type=str, default='adan', choices=['adan', 'adam'], help="optimizer")
@@ -131,6 +138,10 @@ if __name__ == '__main__':
     elif opt.O2:
         opt.fp16 = True
         opt.backbone = 'vanilla'
+
+
+        # control shape = H W 3
+
 
     print("*********************** backbone using is ***********", opt.backbone)
 
@@ -216,6 +227,16 @@ if __name__ == '__main__':
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+    # ***********************  preprocess control ******************
+    # reading input image
+    if opt.control and opt.image_control:
+        image_path = opt.image_control
+        # to add: input is control
+        control_image = preprocess_control(image_path, opt.control_type)
+        control_image = torch.tensor(control_image,dtype=torch.half, device=device)
+    else:
+        control_image=None
+
     model = NeRFNetwork(opt).to(device)
 
     if opt.dmtet and opt.init_ckpt != '':
@@ -264,7 +285,7 @@ if __name__ == '__main__':
 
         if opt.guidance == 'stable-diffusion':
             from guidance.sd_utils import StableDiffusion
-            guidance = StableDiffusion(device, opt.fp16, opt.vram_O, opt.sd_version, opt.hf_key, opt.t_range, opt.control)
+            guidance = StableDiffusion(device, opt.fp16, opt.vram_O, opt.sd_version, opt.hf_key, opt.t_range, opt.control , control_image ,opt.control_type)
         elif opt.guidance == 'zero123':
             from guidance.zero123_utils import Zero123
             guidance = Zero123(device, opt.fp16, opt.vram_O, opt.t_range)

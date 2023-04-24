@@ -3,6 +3,7 @@ from diffusers import AutoencoderKL, UNet2DConditionModel, PNDMScheduler, DDIMSc
 from diffusers import StableDiffusionControlNetPipeline, ControlNetModel
 from diffusers.utils.import_utils import is_xformers_available
 from os.path import isfile
+from process_control import *
 
 # suppress partial model loading warning
 logging.set_verbosity_error()
@@ -41,7 +42,7 @@ class UNet2DConditionOutput:
     sample: torch.HalfTensor # Not sure how to check what unet_traced.pt contains, and user wants. HalfTensor or FloatTensor
 
 class StableDiffusion(nn.Module):
-    def __init__(self, device, fp16, vram_O, sd_version='2.1', hf_key=None, t_range=[0.02, 0.98], control=False):
+    def __init__(self, device, fp16, vram_O, sd_version='2.1', hf_key=None, t_range=[0.02, 0.98], control=False, control_image=None, control_type=None):
         super().__init__()
 
         self.device = device
@@ -68,8 +69,14 @@ class StableDiffusion(nn.Module):
         # print("*****model key and torch_dtype is ", model_key, self.precision_t)
         # pipe = StableDiffusionPipeline.from_pretrained(model_key, torch_dtype=self.precision_t)
 
+
         model_keys = ["lllyasviel/sd-controlnet-canny","lllyasviel/sd-controlnet-normal", "lllyasviel/sd-controlnet-depth" ]
-        control_net_model_key = model_keys[2]
+        if control_type == "depth":
+            control_net_model_key = model_keys[2]
+        else:
+            #control_type == "canny":
+            control_net_model_key = model_keys[0]
+
 
         controlnet = ControlNetModel.from_pretrained(control_net_model_key, torch_dtype=torch.float16)
         pipe = StableDiffusionControlNetPipeline.from_pretrained(
@@ -112,6 +119,9 @@ class StableDiffusion(nn.Module):
         self.max_step = int(self.num_train_timesteps * t_range[1])
         self.alphas = self.scheduler.alphas_cumprod.to(self.device) # for convenience
 
+        self.control_image = control_image
+        self.control_type = control_type
+
         print(f'[INFO] loaded stable diffusion!')
 
     @torch.no_grad()
@@ -138,7 +148,7 @@ class StableDiffusion(nn.Module):
         return embeddings
 
 
-    def train_step(self, text_embeddings, pred_rgb, pred_depth, guidance_scale=100, as_latent=False, grad_scale=1):
+    def train_step(self, text_embeddings, pred_rgb, pred_depth, pred_image , azimuth,guidance_scale=100, as_latent=False, grad_scale=1):
 
         # print("********as_latent", as_latent)
 
@@ -159,12 +169,48 @@ class StableDiffusion(nn.Module):
 
         # pred
 
-        # print("pred_depth shape before ",pred_depth.shape)
-        pred_depth_latent = pred_depth[:,:3,:,:]
-        # print("pred_depth latent shape before ", pred_depth_latent.shape)
-        pred_depth_latent = F.interpolate(pred_depth_latent, (512, 512), mode='bilinear', align_corners=False)
+        # print("*** 1 pred_image shape" ,pred_image.shape, torch.max(pred_image))
 
-        pred_depth_latent = torch.cat([pred_depth_latent] * 2)
+        if self.control_type == 'depth':
+            pred_control_latent = pred_depth[:,:3,:,:]
+            print("*** 1 pred_control_latent shape ", pred_control_latent.shape , torch.max(pred_control_latent))
+            pred_control_latent = F.interpolate(pred_control_latent, (512, 512), mode='bilinear', align_corners=False)
+            print("*** 2 pred_control_latent shape ", pred_control_latent.shape, torch.max(pred_control_latent))
+            pred_control_latent = torch.cat([pred_control_latent] * 2)
+            print("*** 3 pred_control_latent shape ", pred_control_latent.shape, torch.max(pred_control_latent))
+
+        elif self.control_type == 'canny':
+            if -15<= azimuth <= 15:
+                print("Front view azimuth = ", azimuth)
+                pred_control_latent = self.control_image
+                print("pred_control_latent ", pred_control_latent.shape, torch.max(pred_control_latent))
+                print("pred_rgb shape", pred_rgb.shape)
+
+            else:
+                print("Non Front view azimuth = ", azimuth)
+                pred_image = pred_image.reshape(64,64,3) * 255
+
+                pred_image_np = pred_image.cpu().detach().numpy().astype(np.uint8)
+                print(pred_image_np.shape, np.max(pred_image_np))
+                canny = preprocess_control_image(pred_image_np, "canny")
+                print(canny.shape, np.max(canny))
+                pred_control_latent = torch.tensor(canny,dtype=torch.half,device=self.device)
+
+
+
+            pred_control_latent = pred_control_latent.permute(2, 0, 1)
+            # print("pred_control_latent ", pred_control_latent.shape)
+            C, H, W = pred_control_latent.shape
+            pred_control_latent = pred_control_latent.reshape(1, C, H, W)
+            # print("pred_control_latent ", pred_control_latent.shape)
+            pred_control_latent = F.interpolate(pred_control_latent, (512, 512), mode='bilinear', align_corners=False)
+            pred_control_latent = torch.cat([pred_control_latent] * 2)
+
+
+
+
+
+
 
         # print("pred_depth shape after ", pred_depth.shape)
 
@@ -205,7 +251,7 @@ class StableDiffusion(nn.Module):
                     control_latent_model_input,
                     t,
                     encoder_hidden_states=text_embeddings,
-                    controlnet_cond=pred_depth_latent,
+                    controlnet_cond=pred_control_latent,
                     conditioning_scale=1,
                     return_dict=False,
                 )
@@ -260,7 +306,7 @@ class StableDiffusion(nn.Module):
                         control_noise_pred_text - control_noise_pred_uncond)
             control_grad = grad_scale * w * (control_noise_pred - noise)
             control_grad = torch.nan_to_num(control_grad)
-            loss_control = SpecifyGradient.apply(pred_depth, control_grad)
+            loss_control = SpecifyGradient.apply(pred_rgb, control_grad)
             loss = loss + loss_control
 
         # print("loss : " ,  loss.shape, loss)

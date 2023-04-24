@@ -203,8 +203,10 @@ class NeRFDataset:
 
     def get_default_view_data(self):
 
-        H = int(self.opt.known_view_scale * self.H)
-        W = int(self.opt.known_view_scale * self.W)
+        # H = int(self.opt.known_view_scale * self.H)
+        # W = int(self.opt.known_view_scale * self.W)
+        H = self.H
+        W = self.W
         cx = H / 2
         cy = W / 2
 
@@ -243,57 +245,63 @@ class NeRFDataset:
         return data
 
     def collate(self, index):
+        # we choose default view in 50% of time
+        ratio = random.random()
 
-        B = len(index) # always 1
+        if ratio > 0.5:
+            B = len(index) # always 1
 
-        if self.training:
-            # random pose on the fly
-            poses, dirs, thetas, phis, radius = rand_poses(B, self.device, radius_range=self.opt.radius_range, theta_range=self.opt.theta_range, phi_range=self.opt.phi_range, return_dirs=True, angle_overhead=self.opt.angle_overhead, angle_front=self.opt.angle_front, jitter=self.opt.jitter_pose, uniform_sphere_rate=self.opt.uniform_sphere_rate)
+            if self.training:
+                # random pose on the fly
+                poses, dirs, thetas, phis, radius = rand_poses(B, self.device, radius_range=self.opt.radius_range, theta_range=self.opt.theta_range, phi_range=self.opt.phi_range, return_dirs=True, angle_overhead=self.opt.angle_overhead, angle_front=self.opt.angle_front, jitter=self.opt.jitter_pose, uniform_sphere_rate=self.opt.uniform_sphere_rate)
 
-            # random focal
-            fov = random.random() * (self.opt.fovy_range[1] - self.opt.fovy_range[0]) + self.opt.fovy_range[0]
+                # random focal
+                fov = random.random() * (self.opt.fovy_range[1] - self.opt.fovy_range[0]) + self.opt.fovy_range[0]
+            else:
+                # circle pose
+                thetas = torch.FloatTensor([self.opt.default_theta]).to(self.device)
+                phis = torch.FloatTensor([(index[0] / self.size) * 360]).to(self.device)
+                radius = torch.FloatTensor([self.opt.default_radius]).to(self.device)
+                poses, dirs = circle_poses(self.device, radius=radius, theta=thetas, phi=phis, return_dirs=True, angle_overhead=self.opt.angle_overhead, angle_front=self.opt.angle_front)
+
+                # fixed focal
+                fov = self.opt.default_fovy
+
+            focal = self.H / (2 * np.tan(np.deg2rad(fov) / 2))
+            intrinsics = np.array([focal, focal, self.cx, self.cy])
+
+            projection = torch.tensor([
+                [2*focal/self.W, 0, 0, 0],
+                [0, -2*focal/self.H, 0, 0],
+                [0, 0, -(self.far+self.near)/(self.far-self.near), -(2*self.far*self.near)/(self.far-self.near)],
+                [0, 0, -1, 0]
+            ], dtype=torch.float32, device=self.device).unsqueeze(0)
+
+            mvp = projection @ torch.inverse(poses) # [1, 4, 4]
+
+            # sample a low-resolution but full image
+            rays = get_rays(poses, intrinsics, self.H, self.W, -1)
+
+            # delta polar/azimuth/radius to default view for zero123
+            delta_polar = thetas - self.opt.default_theta
+            delta_azimuth = phis - self.opt.default_phi
+            delta_azimuth[delta_azimuth > 180] -= 360 # range in [-180, 180]
+            delta_radius = radius - self.opt.default_radius
+
+            data = {
+                'H': self.H,
+                'W': self.W,
+                'rays_o': rays['rays_o'],
+                'rays_d': rays['rays_d'],
+                'dir': dirs,
+                'mvp': mvp,
+                'polar': delta_polar,
+                'azimuth': delta_azimuth,
+                'radius': delta_radius,
+            }
         else:
-            # circle pose
-            thetas = torch.FloatTensor([self.opt.default_theta]).to(self.device)
-            phis = torch.FloatTensor([(index[0] / self.size) * 360]).to(self.device)
-            radius = torch.FloatTensor([self.opt.default_radius]).to(self.device)
-            poses, dirs = circle_poses(self.device, radius=radius, theta=thetas, phi=phis, return_dirs=True, angle_overhead=self.opt.angle_overhead, angle_front=self.opt.angle_front)
- 
-            # fixed focal
-            fov = self.opt.default_fovy
-
-        focal = self.H / (2 * np.tan(np.deg2rad(fov) / 2))
-        intrinsics = np.array([focal, focal, self.cx, self.cy])
-
-        projection = torch.tensor([
-            [2*focal/self.W, 0, 0, 0], 
-            [0, -2*focal/self.H, 0, 0],
-            [0, 0, -(self.far+self.near)/(self.far-self.near), -(2*self.far*self.near)/(self.far-self.near)],
-            [0, 0, -1, 0]
-        ], dtype=torch.float32, device=self.device).unsqueeze(0)
-
-        mvp = projection @ torch.inverse(poses) # [1, 4, 4]
-        
-        # sample a low-resolution but full image
-        rays = get_rays(poses, intrinsics, self.H, self.W, -1)
-
-        # delta polar/azimuth/radius to default view for zero123
-        delta_polar = thetas - self.opt.default_theta
-        delta_azimuth = phis - self.opt.default_phi
-        delta_azimuth[delta_azimuth > 180] -= 360 # range in [-180, 180]
-        delta_radius = radius - self.opt.default_radius
-
-        data = {
-            'H': self.H,
-            'W': self.W,
-            'rays_o': rays['rays_o'],
-            'rays_d': rays['rays_d'],
-            'dir': dirs,
-            'mvp': mvp,
-            'polar': delta_polar,
-            'azimuth': delta_azimuth,
-            'radius': delta_radius,
-        }
+            data = self.get_default_view_data()
+            # print(data)
 
         return data
 

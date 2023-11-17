@@ -351,7 +351,7 @@ class Trainer(object):
     # calculate the text embs.
     @torch.no_grad()
     def prepare_embeddings(self):
-
+        print("*******start preprare embeddings \n\n\n\n\n\n\n\n\n ")
         # text embeddings (stable-diffusion)
         if self.opt.text is not None:
 

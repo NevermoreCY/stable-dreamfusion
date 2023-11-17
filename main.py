@@ -226,11 +226,12 @@ if __name__ == '__main__':
 
         if opt.image is not None:
             opt.images += [opt.image]
-            opt.ref_radii += [opt.default_radius]
-            opt.ref_polars += [opt.default_polar]
-            opt.ref_azimuths += [opt.default_azimuth]
-            opt.zero123_ws += [opt.default_zero123_w]
+            opt.ref_radii += [opt.default_radius] # 3.2
+            opt.ref_polars += [opt.default_polar]  # 90
+            opt.ref_azimuths += [opt.default_azimuth] #0
+            opt.zero123_ws += [opt.default_zero123_w] # 1
 
+        print("image config is ", opt.image_config)
         if opt.image_config is not None:
             # for multiview (zero123)
             conf = pd.read_csv(opt.image_config, skipinitialspace=True)
@@ -386,12 +387,18 @@ if __name__ == '__main__':
             guidance['IF'] = IF(device, opt.vram_O, opt.t_range)
 
         if 'zero123' in opt.guidance:
+            # should be our cases
             from guidance.zero123_utils import Zero123
             guidance['zero123'] = Zero123(device=device, fp16=opt.fp16, config=opt.zero123_config, ckpt=opt.zero123_ckpt, vram_O=opt.vram_O, t_range=opt.t_range, opt=opt)
 
         if 'clip' in opt.guidance:
             from guidance.clip_utils import CLIP
             guidance['clip'] = CLIP(device)
+
+        if 'con3d' in opt.guidance:
+            # should be our cases
+            from guidance.zero123_utils import Zero123
+            guidance['zero123'] = Zero123(device=device, fp16=opt.fp16, config=opt.zero123_config, ckpt=opt.zero123_ckpt, vram_O=opt.vram_O, t_range=opt.t_range, opt=opt)
 
         trainer = Trainer(' '.join(sys.argv), 'df', opt, model, guidance, device=device, workspace=opt.workspace, optimizer=optimizer, ema_decay=0.95, fp16=opt.fp16, lr_scheduler=scheduler, use_checkpoint=opt.ckpt, scheduler_update_every_step=True)
 
@@ -407,6 +414,7 @@ if __name__ == '__main__':
             test_loader = NeRFDataset(opt, device=device, type='test', H=opt.H, W=opt.W, size=opt.dataset_size_test).dataloader(batch_size=1)
 
             max_epoch = np.ceil(opt.iters / len(train_loader)).astype(np.int32)
+            print("iters :" , opt.iters, "len train :" , len(train_loader))
             trainer.train(train_loader, valid_loader, test_loader, max_epoch)
 
             if opt.save_mesh:

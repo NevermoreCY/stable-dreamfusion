@@ -351,7 +351,7 @@ class Trainer(object):
     # calculate the text embs.
     @torch.no_grad()
     def prepare_embeddings(self):
-        print("*******start preprare embeddings \n\n\n\n\n\n\n\n\n ")
+        # print("*******start preprare embeddings \n\n\n\n\n\n\n\n\n ")
         # text embeddings (stable-diffusion)
         if self.opt.text is not None:
 
@@ -377,7 +377,9 @@ class Trainer(object):
                 self.embeddings['x'] = self.guidance['SD'].get_text_embeds([self.opt.text])
 
 
-        print("******* opt.images has length  " , len(self.opt.images),  "\n it is " ,self.opt.images )
+        # print("******* opt.images has length  " , len(self.opt.images),  "\n it is " ,self.opt.images )
+        # ******* opt.images has length   1
+        #  it is  ['/yuch_ws/zero123/zero123/views_shape_test/1004ae81238886674d44f5db04bf14b8/control_net_0_rgba.png']
         if self.opt.images is not None:
 
             h = int(self.opt.known_view_scale * self.opt.h)
@@ -450,6 +452,8 @@ class Trainer(object):
         """
 
         # perform RGBD loss instead of SDS if is image-conditioned
+        # TODO:
+        # train with rgb loss every 4 iterations, need to remove in our version
         do_rgbd_loss = self.opt.images is not None and \
             (self.global_step % self.opt.known_view_interval == 0)
 
@@ -540,6 +544,7 @@ class Trainer(object):
             else:
                 bg_color = torch.rand(3).to(self.device) # single color random bg
 
+        # nerf model
         outputs = self.model.render(rays_o, rays_d, mvp, H, W, staged=False, perturb=True, bg_color=bg_color, ambient_ratio=ambient_ratio, shading=shading, binarize=binarize)
         pred_depth = outputs['depth'].reshape(B, 1, H, W)
         pred_mask = outputs['weights_sum'].reshape(B, 1, H, W)
@@ -821,6 +826,7 @@ class Trainer(object):
                 self.save_checkpoint(full=True, best=False)
 
             if self.epoch % self.opt.eval_interval == 0:
+                # default is 1
                 self.evaluate_one_epoch(valid_loader)
                 self.save_checkpoint(full=False, best=True)
 

@@ -447,6 +447,7 @@ class Trainer(object):
         do_rgbd_loss = self.opt.images is not None and \
             (self.global_step % self.opt.known_view_interval == 0)
 
+        do_rgbd_loss = False
         # override random camera with fixed known camera
         if do_rgbd_loss:
             data = self.default_view_data

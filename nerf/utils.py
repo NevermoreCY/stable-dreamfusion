@@ -372,6 +372,12 @@ class Trainer(object):
             if 'clip' in self.guidance:
                 self.embeddings['clip']['text'] = self.guidance['clip'].get_text_embeds(self.opt.text)
 
+            # TODO:
+            if 'con3d' in self.guidance:
+                self.embeddings['x'] = self.guidance['SD'].get_text_embeds([self.opt.text])
+
+
+        print("******* opt.images has length  " , len(self.opt.images), "first item shape ", self.opt.images[0].shape, "\n it is " ,self.opt.images )
         if self.opt.images is not None:
 
             h = int(self.opt.known_view_scale * self.opt.h)

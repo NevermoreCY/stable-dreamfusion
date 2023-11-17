@@ -678,6 +678,7 @@ class Trainer(object):
                     
             if 'zero123' in self.guidance:
 
+
                 polar = data['polar']
                 azimuth = data['azimuth']
                 radius = data['radius']

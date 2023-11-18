@@ -54,6 +54,9 @@ if __name__ == '__main__':
     parser.add_argument('--front_decay_factor', type=float, default=2, help="decay factor for the front prompt")
     parser.add_argument('--side_decay_factor', type=float, default=10, help="decay factor for the side prompt")
 
+    ## control 3d options
+    parser.add_argument('--control_text', type=str, default='', help="control text")
+
     ### training options
     parser.add_argument('--iters', type=int, default=10000, help="training iters")
     parser.add_argument('--lr', type=float, default=1e-3, help="max learning rate")

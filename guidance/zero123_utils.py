@@ -132,7 +132,12 @@ class Zero123(nn.Module):
         else:
             pred_rgb_256 = F.interpolate(pred_rgb, (256, 256), mode='bilinear', align_corners=False)
             latents = self.encode_imgs(pred_rgb_256)
-
+#    def encode_imgs(self, imgs):
+        # imgs: [B, 3, 256, 256] RGB space image
+        # with self.model.ema_scope():
+        # imgs = imgs * 2 - 1
+        # latents = torch.cat([self.model.get_first_stage_encoding(self.model.encode_first_stage(img.unsqueeze(0))) for img in imgs], dim=0)
+        # return latents # [B, 4, 32, 32] Latent space image
         t = torch.randint(self.min_step, self.max_step + 1, (latents.shape[0],), dtype=torch.long, device=self.device)
 
         # Set weights acc to closeness in angle
@@ -146,7 +151,10 @@ class Zero123(nn.Module):
 
         # Multiply closeness-weight by user-given weights
         zero123_ws = torch.tensor(embeddings['zero123_ws'])[None, :].to(self.device) * inv_angles
+
+        # normalize using max
         zero123_ws /= zero123_ws.max(dim=-1, keepdim=True)[0]
+        # drop the lower ones
         zero123_ws[zero123_ws < 0.1] = 0
 
         with torch.no_grad():
@@ -158,6 +166,7 @@ class Zero123(nn.Module):
 
             noise_preds = []
             # Loop through each ref image
+            c = 0
             for (zero123_w, c_crossattn, c_concat, ref_polar, ref_azimuth, ref_radius) in zip(zero123_ws.T,
                                                                                               embeddings['c_crossattn'], embeddings['c_concat'],
                                                                                               ref_polars, ref_azimuths, ref_radii):
@@ -173,6 +182,11 @@ class Zero123(nn.Module):
                 clip_emb = self.model.cc_projection(torch.cat([c_crossattn.repeat(len(T), 1, 1), T], dim=-1))
                 cond['c_crossattn'] = [torch.cat([torch.zeros_like(clip_emb).to(self.device), clip_emb], dim=0)]
                 cond['c_concat'] = [torch.cat([torch.zeros_like(c_concat).repeat(len(T), 1, 1, 1).to(self.device), c_concat.repeat(len(T), 1, 1, 1)], dim=0)]
+
+                c+=1
+                print("******* parameters before apply model , first cond[c_crossattn]: ", len(cond['c_crossattn']),cond['c_crossattn'][0].shape ,
+                      'second cond[c_concat]: ', len(cond['c_concat']), cond['c_concat'][0].shape, 'Clip emb : ', clip_emb.shape, 'c:' ,c)
+
                 noise_pred = self.model.apply_model(x_in, t_in, cond)
                 noise_pred_uncond, noise_pred_cond = noise_pred.chunk(2)
                 noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_cond - noise_pred_uncond)

@@ -190,6 +190,7 @@ class Zero123(nn.Module):
             noise_preds = []
             # Loop through each ref image
             c = 0
+            print(c)
             for (zero123_w, text_prompt, c_concat, ref_polar, ref_azimuth, ref_radius) in zip(zero123_ws.T,
                                                                                               embeddings['text_prompt'], embeddings['c_concat'],
                                                                                               ref_polars, ref_azimuths, ref_radii):

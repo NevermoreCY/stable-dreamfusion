@@ -194,6 +194,8 @@ class Zero123(nn.Module):
             for (zero123_w, text_prompt, c_concat, ref_polar, ref_azimuth, ref_radius) in zip(zero123_ws.T,
                                                                                               embeddings['text_prompt'], embeddings['c_concat'],
                                                                                               ref_polars, ref_azimuths, ref_radii):
+
+                print(c,'::')
                 # polar,azimuth,radius are all actually delta wrt default
                 p = polar + ref_polars[0] - ref_polar
                 a = azimuth + ref_azimuths[0] - ref_azimuth

@@ -207,10 +207,15 @@ class Zero123(nn.Module):
 
                 print('****** T original shape', T.shape)
                 print('****** Text prompt is ', text_prompt)
-                clip_txt = self.model.get_learned_conditioning(text_prompt)
-                T = T[:, None, :].repeat(1, 77, 1)
 
+                #****** T original shape torch.Size([1, 1, 4])
+                #****** Text prompt is  bus
+
+                clip_txt = self.model.get_learned_conditioning(text_prompt)
                 print("*** clip txt", clip_txt.shape)
+                T = T.repeat(1, 77, 1)
+
+
                 print("*** T ", T.shape)
 
                 clip_camera_txt = torch.concat([clip_txt, T], dim=-1)

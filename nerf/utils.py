@@ -419,7 +419,7 @@ class Trainer(object):
                     'ref_polars' : self.opt.ref_polars,
                     'ref_azimuths' : self.opt.ref_azimuths,
                     'ref_radii' : self.opt.ref_radii,
-                    'text_prompt': text_prompt
+                    'text_prompt': [text_prompt]
 
                 }
 

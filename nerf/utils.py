@@ -406,14 +406,21 @@ class Trainer(object):
                 rgba_256 = np.stack([cv2.resize(rgba, (256, 256), interpolation=cv2.INTER_AREA).astype(np.float32) / 255 for rgba in rgbas])
                 rgbs_256 = rgba_256[..., :3] * rgba_256[..., 3:] + (1 - rgba_256[..., 3:])
                 rgb_256 = torch.from_numpy(rgbs_256).permute(0,3,1,2).contiguous().to(self.device)
+                # note we only calculate c_concat here
                 guidance_embeds = self.guidance['zero123'].get_img_embeds(rgb_256)
+                text_prompt = self.opt.control_text
+                print("*** text prompt is ", text_prompt)
+
+
                 self.embeddings['zero123']['default'] = {
                     'zero123_ws' : self.opt.zero123_ws,
-                    'c_crossattn' : guidance_embeds[0],
-                    'c_concat' : guidance_embeds[1],
+                    # 'c_crossattn' : [],
+                    'c_concat' : guidance_embeds,
                     'ref_polars' : self.opt.ref_polars,
                     'ref_azimuths' : self.opt.ref_azimuths,
                     'ref_radii' : self.opt.ref_radii,
+                    'text_prompt': text_prompt
+
                 }
 
             if 'clip' in self.guidance:
@@ -446,7 +453,7 @@ class Trainer(object):
         # perform RGBD loss instead of SDS if is image-conditioned
         do_rgbd_loss = self.opt.images is not None and \
             (self.global_step % self.opt.known_view_interval == 0)
-
+        # we don't do rgb loss with control input
         do_rgbd_loss = False
         # override random camera with fixed known camera
         if do_rgbd_loss:
@@ -548,6 +555,7 @@ class Trainer(object):
             pred_rgb = outputs['image'].reshape(B, H, W, 3).permute(0, 3, 1, 2).contiguous() # [B, 3, H, W]
 
         # known view loss
+        # we can ignore this part for now
         if do_rgbd_loss:
             gt_mask = self.mask # [B, H, W]
             gt_rgb = self.rgb   # [B, 3, H, W]

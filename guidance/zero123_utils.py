@@ -90,9 +90,32 @@ class Zero123(nn.Module):
     def get_img_embeds(self, x):
         # x: image tensor [B, 3, 256, 256] in [0, 1]
         x = x * 2 - 1
-        c = [self.model.get_learned_conditioning(xx.unsqueeze(0)) for xx in x] #.tile(n_samples, 1, 1)
-        v = [self.model.encode_first_stage(xx.unsqueeze(0)).mode() for xx in x]
-        return c, v
+        # c = [self.model.get_learned_conditioning(xx.unsqueeze(0)) for xx in x] #.tile(n_samples, 1, 1)
+        # v = [self.model.encode_first_stage(xx.unsqueeze(0)).mode() for xx in x]
+
+        control = x
+
+        print("*** control shape before encode:", control.shape)
+        control_encode = self.model.encode_first_stage(control)
+        control_encode = self.model.get_first_stage_encoding(control_encode).detach()
+        c = [control_encode]
+        print("*** control shape after encode:", control_encode.shape)
+        # 'c_crossattn': guidance_embeds[0],
+        # 'c_concat': guidance_embeds[1],
+        return c
+
+    # original:
+    # def get_img_embeds(self, x):
+    #     # x: image tensor [B, 3, 256, 256] in [0, 1]
+    #     x = x * 2 - 1
+    #     c = [self.model.get_learned_conditioning(xx.unsqueeze(0)) for xx in x] #.tile(n_samples, 1, 1)
+    #     v = [self.model.encode_first_stage(xx.unsqueeze(0)).mode() for xx in x]
+    #
+    #
+    #
+    #     # 'c_crossattn': guidance_embeds[0],
+    #     # 'c_concat': guidance_embeds[1],
+    #     return c, v
 
     def angle_between(self, sph_v1, sph_v2):
         def sph2cart(sv):
@@ -167,8 +190,8 @@ class Zero123(nn.Module):
             noise_preds = []
             # Loop through each ref image
             c = 0
-            for (zero123_w, c_crossattn, c_concat, ref_polar, ref_azimuth, ref_radius) in zip(zero123_ws.T,
-                                                                                              embeddings['c_crossattn'], embeddings['c_concat'],
+            for (zero123_w, text_prompt, c_concat, ref_polar, ref_azimuth, ref_radius) in zip(zero123_ws.T,
+                                                                                              embeddings['text_prompt'], embeddings['c_concat'],
                                                                                               ref_polars, ref_azimuths, ref_radii):
                 # polar,azimuth,radius are all actually delta wrt default
                 p = polar + ref_polars[0] - ref_polar
@@ -178,15 +201,35 @@ class Zero123(nn.Module):
                 # T = torch.tensor([math.radians(p), math.sin(math.radians(-a)), math.cos(math.radians(a)), r])
                 # T = T[None, None, :].to(self.device)
                 T = torch.stack([torch.deg2rad(p), torch.sin(torch.deg2rad(-a)), torch.cos(torch.deg2rad(a)), r], dim=-1)[:, None, :]
+
+                print('****** T original shape', T.shape)
+                print('****** Text prompt is ', text_prompt)
+                clip_txt = self.model.get_learned_conditioning(text_prompt)
+                T = T[:, None, :].repeat(1, 77, 1)
+
+                print("*** clip txt", clip_txt.shape)
+                print("*** T ", T.shape)
+
+                clip_camera_txt = torch.concat([clip_txt, T], dim=-1)
+
+                print('*** clip_camera_txt shape', clip_camera_txt.shape)
+
+
                 cond = {}
-                clip_emb = self.model.cc_projection(torch.cat([c_crossattn.repeat(len(T), 1, 1), T], dim=-1))
+                # clip_emb = self.model.cc_projection(torch.cat([c_crossattn.repeat(len(T), 1, 1), T], dim=-1))
+
+                clip_emb = self.model.cc_projection(clip_camera_txt)
+
                 cond['c_crossattn'] = [torch.cat([torch.zeros_like(clip_emb).to(self.device), clip_emb], dim=0)]
                 cond['c_concat'] = [torch.cat([torch.zeros_like(c_concat).repeat(len(T), 1, 1, 1).to(self.device), c_concat.repeat(len(T), 1, 1, 1)], dim=0)]
 
-                c+=1
+                # c+=1
                 print("******* parameters before apply model , first cond[c_crossattn]: ", len(cond['c_crossattn']),cond['c_crossattn'][0].shape ,
                       'second cond[c_concat]: ', len(cond['c_concat']), cond['c_concat'][0].shape, 'Clip emb : ', clip_emb.shape, 'c:' ,c)
 
+                # ******* ORIGINAL parameters before apply model , first cond[c_crossattn]:  1 torch.Size([2, 1, 768])
+                # second cond[c_concat]:  1 torch.Size([2, 4, 32, 32])
+                # Clip emb :  torch.Size([1, 1, 768]) c: 1
                 noise_pred = self.model.apply_model(x_in, t_in, cond)
                 noise_pred_uncond, noise_pred_cond = noise_pred.chunk(2)
                 noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_cond - noise_pred_uncond)

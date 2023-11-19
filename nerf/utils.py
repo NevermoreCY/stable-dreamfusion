@@ -406,11 +406,14 @@ class Trainer(object):
             if 'zero123' in self.guidance:
                 rgb_256 = np.stack([cv2.resize(rgb, (256, 256), interpolation=cv2.INTER_AREA).astype(np.float32) / 255 for rgb in rgbs])
 
-                print("****** rgb 256", rgb_256.shape , "max,min:" ,np.max(rgb_256), np.min(rgb_256) )
+                # print("****** rgb 256", rgb_256.shape , "max,min:" ,np.max(rgb_256), np.min(rgb_256) )
+                # ****** rgb 256 (1, 256, 256, 3) max,min: 1.0 0.0
+
                 # rgbs_256 = rgba_256[..., :3] * rgba_256[..., 3:] + (1 - rgba_256[..., 3:])
                 rgb_256 = torch.from_numpy(rgb_256).permute(0,3,1,2).contiguous().to(self.device)
 
-                print(rgb_256.shape)
+                # print(rgb_256.shape)
+                # torch.Size([1, 3, 256, 256])
 
                 # rgba_256 = np.stack([cv2.resize(rgba, (256, 256), interpolation=cv2.INTER_AREA).astype(np.float32) / 255 for rgba in rgbas])
                 # rgbs_256 = rgba_256[..., :3] * rgba_256[..., 3:] + (1 - rgba_256[..., 3:])
@@ -418,7 +421,8 @@ class Trainer(object):
                 # note we only calculate c_concat here
                 guidance_embeds = self.guidance['zero123'].get_img_embeds(rgb_256)
                 text_prompt = self.opt.control_text
-                print("*** text prompt is ", text_prompt)
+                # print("*** text prompt is ", text_prompt)
+                # *** text prompt is  bus
 
 
                 self.embeddings['zero123']['default'] = {
@@ -565,7 +569,7 @@ class Trainer(object):
 
         # known view loss
         # we can ignore this part for now
-        print("******Do rgbd loss?", do_rgbd_loss)
+        # print("******Do rgbd loss?", do_rgbd_loss)
         if do_rgbd_loss:
             gt_mask = self.mask # [B, H, W]
             gt_rgb = self.rgb   # [B, 3, H, W]

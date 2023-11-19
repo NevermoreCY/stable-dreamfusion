@@ -195,7 +195,7 @@ class Zero123(nn.Module):
                                                                                               embeddings['text_prompt'], embeddings['c_concat'],
                                                                                               ref_polars, ref_azimuths, ref_radii):
 
-                print(c,'::')
+                # print(c,'::')
                 # polar,azimuth,radius are all actually delta wrt default
                 p = polar + ref_polars[0] - ref_polar
                 a = azimuth + ref_azimuths[0] - ref_azimuth
@@ -205,23 +205,26 @@ class Zero123(nn.Module):
                 # T = T[None, None, :].to(self.device)
                 T = torch.stack([torch.deg2rad(p), torch.sin(torch.deg2rad(-a)), torch.cos(torch.deg2rad(a)), r], dim=-1)[:, None, :]
 
-                print('****** T original shape', T.shape)
-                print('****** Text prompt is ', text_prompt)
+                # print('****** T original shape', T.shape)
+                # print('****** Text prompt is ', text_prompt)
 
                 #****** T original shape torch.Size([1, 1, 4])
                 #****** Text prompt is  bus
 
                 clip_txt = self.model.get_learned_conditioning(text_prompt)
-                print("*** clip txt", clip_txt.shape)
+                # print("*** clip txt", clip_txt.shape)
+                #*** clip txt torch.Size([1, 77, 768])
+
                 T = T.repeat(1, 77, 1)
 
 
                 print("*** T ", T.shape)
+                # *** T  torch.Size([1, 77, 4])
 
                 clip_camera_txt = torch.concat([clip_txt, T], dim=-1)
 
                 print('*** clip_camera_txt shape', clip_camera_txt.shape)
-
+                # *** clip_camera_txt shape torch.Size([1, 77, 772])
 
                 cond = {}
                 # clip_emb = self.model.cc_projection(torch.cat([c_crossattn.repeat(len(T), 1, 1), T], dim=-1))
@@ -234,6 +237,11 @@ class Zero123(nn.Module):
                 # c+=1
                 print("******* parameters before apply model , first cond[c_crossattn]: ", len(cond['c_crossattn']),cond['c_crossattn'][0].shape ,
                       'second cond[c_concat]: ', len(cond['c_concat']), cond['c_concat'][0].shape, 'Clip emb : ', clip_emb.shape, 'c:' ,c)
+
+                # ******* NEW parameters before apply model , first cond[c_crossattn]:  1 torch.Size([2, 77, 768])
+                # second cond[c_concat]:  1 torch.Size([2, 4, 32, 32])
+                # Clip emb :  torch.Size([1, 77, 768]) c: 0
+
 
                 # ******* ORIGINAL parameters before apply model , first cond[c_crossattn]:  1 torch.Size([2, 1, 768])
                 # second cond[c_concat]:  1 torch.Size([2, 4, 32, 32])

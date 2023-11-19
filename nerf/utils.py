@@ -378,34 +378,43 @@ class Trainer(object):
             w = int(self.opt.known_view_scale * self.opt.w)
 
             # load processed image
-            for image in self.opt.images:
-                assert image.endswith('_rgba.png') # the rest of this code assumes that the _rgba image has been passed.
-            rgbas = [cv2.cvtColor(cv2.imread(image, cv2.IMREAD_UNCHANGED), cv2.COLOR_BGRA2RGBA) for image in self.opt.images]
-            rgba_hw = np.stack([cv2.resize(rgba, (w, h), interpolation=cv2.INTER_AREA).astype(np.float32) / 255 for rgba in rgbas])
-            rgb_hw = rgba_hw[..., :3] * rgba_hw[..., 3:] + (1 - rgba_hw[..., 3:])
-            self.rgb = torch.from_numpy(rgb_hw).permute(0,3,1,2).contiguous().to(self.device)
-            self.mask = torch.from_numpy(rgba_hw[..., 3] > 0.5).to(self.device)
-            print(f'[INFO] dataset: load image prompt {self.opt.images} {self.rgb.shape}')
+            # for image in self.opt.images:
+            #     assert image.endswith('_rgba.png') # the rest of this code assumes that the _rgba image has been passed.
+            rgbs = [cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB) for image in self.opt.images]
+            # rgba_hw = np.stack([cv2.resize(rgba, (w, h), interpolation=cv2.INTER_AREA).astype(np.float32) / 255 for rgba in rgbas])
+            # rgb_hw = rgba_hw[..., :3] * rgba_hw[..., 3:] + (1 - rgba_hw[..., 3:])
+            # self.rgb = torch.from_numpy(rgb_hw).permute(0,3,1,2).contiguous().to(self.device)
+            # self.mask = torch.from_numpy(rgba_hw[..., 3] > 0.5).to(self.device)
+            # print(f'[INFO] dataset: load image prompt {self.opt.images} {self.rgb.shape}')
 
-            # load depth
-            depth_paths = [image.replace('_rgba.png', '_depth.png') for image in self.opt.images]
-            depths = [cv2.imread(depth_path, cv2.IMREAD_UNCHANGED) for depth_path in depth_paths]
-            depth = np.stack([cv2.resize(depth, (w, h), interpolation=cv2.INTER_AREA) for depth in depths])
-            self.depth = torch.from_numpy(depth.astype(np.float32) / 255).to(self.device)  # TODO: this should be mapped to FP16
-            print(f'[INFO] dataset: load depth prompt {depth_paths} {self.depth.shape}')
-
-            # load normal   # TODO: don't load if normal loss is 0
-            normal_paths = [image.replace('_rgba.png', '_normal.png') for image in self.opt.images]
-            normals = [cv2.imread(normal_path, cv2.IMREAD_UNCHANGED) for normal_path in normal_paths]
-            normal = np.stack([cv2.resize(normal, (w, h), interpolation=cv2.INTER_AREA) for normal in normals])
-            self.normal = torch.from_numpy(normal.astype(np.float32) / 255).to(self.device)
-            print(f'[INFO] dataset: load normal prompt {normal_paths} {self.normal.shape}')
+            # here we use control instead of depth and normal
+            # # load depth
+            # depth_paths = [image.replace('_rgba.png', '_depth.png') for image in self.opt.images]
+            # depths = [cv2.imread(depth_path, cv2.IMREAD_UNCHANGED) for depth_path in depth_paths]
+            # depth = np.stack([cv2.resize(depth, (w, h), interpolation=cv2.INTER_AREA) for depth in depths])
+            # self.depth = torch.from_numpy(depth.astype(np.float32) / 255).to(self.device)  # TODO: this should be mapped to FP16
+            # print(f'[INFO] dataset: load depth prompt {depth_paths} {self.depth.shape}')
+            #
+            # # load normal   # TODO: don't load if normal loss is 0
+            # normal_paths = [image.replace('_rgba.png', '_normal.png') for image in self.opt.images]
+            # normals = [cv2.imread(normal_path, cv2.IMREAD_UNCHANGED) for normal_path in normal_paths]
+            # normal = np.stack([cv2.resize(normal, (w, h), interpolation=cv2.INTER_AREA) for normal in normals])
+            # self.normal = torch.from_numpy(normal.astype(np.float32) / 255).to(self.device)
+            # print(f'[INFO] dataset: load normal prompt {normal_paths} {self.normal.shape}')
 
             # encode embeddings for zero123
             if 'zero123' in self.guidance:
-                rgba_256 = np.stack([cv2.resize(rgba, (256, 256), interpolation=cv2.INTER_AREA).astype(np.float32) / 255 for rgba in rgbas])
-                rgbs_256 = rgba_256[..., :3] * rgba_256[..., 3:] + (1 - rgba_256[..., 3:])
-                rgb_256 = torch.from_numpy(rgbs_256).permute(0,3,1,2).contiguous().to(self.device)
+                rgb_256 = np.stack([cv2.resize(rgb, (256, 256), interpolation=cv2.INTER_AREA).astype(np.float32) / 255 for rgb in rgbs])
+
+                print("****** rgb 256", rgb_256.shape , "max,min:" ,np.max(rgb_256), np.min(rgb_256) )
+                # rgbs_256 = rgba_256[..., :3] * rgba_256[..., 3:] + (1 - rgba_256[..., 3:])
+                rgb_256 = torch.from_numpy(rgb_256).permute(0,3,1,2).contiguous().to(self.device)
+
+                print(rgb_256.shape)
+
+                # rgba_256 = np.stack([cv2.resize(rgba, (256, 256), interpolation=cv2.INTER_AREA).astype(np.float32) / 255 for rgba in rgbas])
+                # rgbs_256 = rgba_256[..., :3] * rgba_256[..., 3:] + (1 - rgba_256[..., 3:])
+                # rgb_256 = torch.from_numpy(rgbs_256).permute(0,3,1,2).contiguous().to(self.device)
                 # note we only calculate c_concat here
                 guidance_embeds = self.guidance['zero123'].get_img_embeds(rgb_256)
                 text_prompt = self.opt.control_text
@@ -556,6 +565,7 @@ class Trainer(object):
 
         # known view loss
         # we can ignore this part for now
+        print("******Do rgbd loss?", do_rgbd_loss)
         if do_rgbd_loss:
             gt_mask = self.mask # [B, H, W]
             gt_rgb = self.rgb   # [B, 3, H, W]

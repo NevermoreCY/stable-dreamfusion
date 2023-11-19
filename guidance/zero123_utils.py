@@ -190,7 +190,7 @@ class Zero123(nn.Module):
             noise_preds = []
             # Loop through each ref image
             c = 0
-            print(c)
+            # print(c)
             for (zero123_w, text_prompt, c_concat, ref_polar, ref_azimuth, ref_radius) in zip(zero123_ws.T,
                                                                                               embeddings['text_prompt'], embeddings['c_concat'],
                                                                                               ref_polars, ref_azimuths, ref_radii):
@@ -218,12 +218,12 @@ class Zero123(nn.Module):
                 T = T.repeat(1, 77, 1)
 
 
-                print("*** T ", T.shape)
+                # print("*** T ", T.shape)
                 # *** T  torch.Size([1, 77, 4])
 
                 clip_camera_txt = torch.concat([clip_txt, T], dim=-1)
 
-                print('*** clip_camera_txt shape', clip_camera_txt.shape)
+                # print('*** clip_camera_txt shape', clip_camera_txt.shape)
                 # *** clip_camera_txt shape torch.Size([1, 77, 772])
 
                 cond = {}
@@ -235,8 +235,8 @@ class Zero123(nn.Module):
                 cond['c_concat'] = [torch.cat([torch.zeros_like(c_concat).repeat(len(T), 1, 1, 1).to(self.device), c_concat.repeat(len(T), 1, 1, 1)], dim=0)]
 
                 # c+=1
-                print("******* parameters before apply model , first cond[c_crossattn]: ", len(cond['c_crossattn']),cond['c_crossattn'][0].shape ,
-                      'second cond[c_concat]: ', len(cond['c_concat']), cond['c_concat'][0].shape, 'Clip emb : ', clip_emb.shape, 'c:' ,c)
+                # print("******* parameters before apply model , first cond[c_crossattn]: ", len(cond['c_crossattn']),cond['c_crossattn'][0].shape ,
+                #       'second cond[c_concat]: ', len(cond['c_concat']), cond['c_concat'][0].shape, 'Clip emb : ', clip_emb.shape, 'c:' ,c)
 
                 # ******* NEW parameters before apply model , first cond[c_crossattn]:  1 torch.Size([2, 77, 768])
                 # second cond[c_concat]:  1 torch.Size([2, 4, 32, 32])

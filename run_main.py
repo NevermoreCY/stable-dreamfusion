@@ -59,3 +59,9 @@ def main():
         test_cmd = 'python3 main.py -O --workspace ' + work_space + ' --test --save_mesh --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 10'
         print('****** Test cmd is ', test_cmd)
         os.system(test_cmd)
+
+if __name__ == '__main__':
+    #sys.argv = ["programName.py","--input","test.txt","--output","tmp/test.txt"]
+    main()
+
+

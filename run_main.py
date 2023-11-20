@@ -32,6 +32,8 @@ def main():
 
     start_idx = job_num* 10
     end_idx = (job_num+1)* 10
+    print("\n\n\n\n\n\n\n\n********** start idx end idx are ", start_idx,end_idx )
+
     folder_list = folder_list[start_idx:end_idx]
 
     for folder in folder_list:

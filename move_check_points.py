@@ -25,7 +25,7 @@ def main():
 
     for folder in folder_list:
         if os.path.isdir(folders + '/' + folder + '/checkpoints'):
-            cmd = ('mv ' + folders + '/' + folder + '/checkpoints'+ ' checkpoints/'+folder)
+            cmd = ('mv ' + folders + '/' + folder + '/checkpoints'+ ' ' + folders + '/checkpoints/'+folder)
             os.system(cmd)
 
     # histo_count = {}

@@ -20,7 +20,7 @@ def main():
     count = 0
     job_num = args.job_num
 
-    folders = '/yuch_ws/3DGEN/original/stable-dreamfusion/results'
+    folders = '/yuch_ws/3DGEN/stable-dreamfusion/results'
     folder_list = os.listdir(folders)
 
     for folder in folder_list:

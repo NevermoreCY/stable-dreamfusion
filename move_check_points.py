@@ -9,7 +9,7 @@ def doArgs(argList):
     parser = argparse.ArgumentParser()
 
     #parser.add_argument('-v', "--verbose", action="store_true", help="Enable verbose debugging", default=False)
-    parser.add_argument('--job_num',type=int, help="Input file name", required=True)
+    parser.add_argument('--job_num',type=int, help="Input file name", default=0)
     # parser.add_argument('--output', action="store", dest="outputFn", type=str, help="Output file name", required=True)
 
     return parser.parse_args(argList)

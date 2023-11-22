@@ -24,7 +24,7 @@ if __name__ == '__main__':
     parser.add_argument('-O2', action='store_true', help="equals --backbone vanilla")
     parser.add_argument('--test', action='store_true', help="test mode")
     parser.add_argument('--six_views', action='store_true', help="six_views mode: save the images of the six views")
-    parser.add_argument('--eval_interval', type=int, default=1, help="evaluate on the valid set every interval epochs")
+    parser.add_argument('--eval_interval', type=int, default=2, help="evaluate on the valid set every interval epochs")
     parser.add_argument('--test_interval', type=int, default=100, help="test on the test set every interval epochs")
     parser.add_argument('--workspace', type=str, default='workspace')
     parser.add_argument('--seed', default=None)
@@ -198,7 +198,8 @@ if __name__ == '__main__':
 
         if opt.text is None:
             # use zero123 guidance model when only providing image
-            opt.guidance = ['zero123']
+            opt.guidance = ['zero123','clip']
+            print("****** Current opt.guidance is ", opt.guidance)
             if not opt.dont_override_stuff:
                 opt.fovy_range = [opt.default_fovy, opt.default_fovy] # fix fov as zero123 doesn't support changing fov
                 opt.guidance_scale = 5

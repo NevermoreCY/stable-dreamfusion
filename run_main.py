@@ -25,7 +25,7 @@ def main():
     job_num = args.job_num
     color = args.color
     exp_name = args.exp_name
-    color_list = ['black', 'white', 'red', 'green', 'yellow', 'blue', 'brown', 'orange', 'pink', 'purple' ,'grey']
+    color_list = ['black', 'white', 'red', 'green', 'yellow', 'blue', 'brown', 'orange', 'pink', 'purple' ,'grey','silver','golden']
     histo_count = {}
     folders = '/yuch_ws/zero123/objaverse-rendering/views_shape'
     good_path = '/yuch_ws/zero123/zero123/good_samples.json'
@@ -46,7 +46,8 @@ def main():
     start_idx = job_num* 10
     end_idx = (job_num+1)* 10
     print("\n\n\n\n\n\n\n\n********** start idx end idx are ", start_idx,end_idx )
-
+    random.seed(10)
+    random.shuffle(folder_list)
     folder_list = folder_list[start_idx:end_idx]
 
     for folder in folder_list:
@@ -71,14 +72,14 @@ def main():
             # train
             train_cmd = ('python3 main.py -O --image ' + img_path + ' --workspace ' + work_space + ' --iters ' + str(
                 iters) +
-                         ' --control_text ' +'\"'+ prompt + '\"' + ' --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 10')
+                         ' --control_text ' +'\"'+ prompt + '\"' + ' --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 100 --eval_interval 5')
 
             print('****** Train cmd is ', train_cmd)
             os.system(train_cmd)
             print("****** training done, start testing")
             # test
 
-            test_cmd = 'python3 main.py -O --workspace ' + work_space + ' --test --save_mesh --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 10'
+            test_cmd = 'python3 main.py -O --workspace ' + work_space + ' --test --save_mesh --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 100 --eval_interval 5'
             print('****** Test cmd is ', test_cmd)
             os.system(test_cmd)
         else:
@@ -86,14 +87,14 @@ def main():
             work_space = 'results/control3d_' + prompt + '_'+ folder +  '_' + exp_name + str(histo_count[folder])
             # train
             train_cmd = ('python3 main.py -O --image '+ img_path + ' --workspace ' + work_space+ ' --iters ' + str(iters) +
-                   ' --control_text ' + prompt + ' --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 10')
+                   ' --control_text ' + prompt + ' --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 100 --eval_interval 5')
 
             print('****** Train cmd is ', train_cmd)
             os.system(train_cmd)
             print("****** training done, start testing")
             # test
 
-            test_cmd = 'python3 main.py -O --workspace ' + work_space + ' --test --save_mesh --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 10'
+            test_cmd = 'python3 main.py -O --workspace ' + work_space + ' --test --save_mesh --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 100 --eval_interval 5'
             print('****** Test cmd is ', test_cmd)
             os.system(test_cmd)
     # with open('hist_count.json','w') as f:

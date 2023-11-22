@@ -48,7 +48,7 @@ def main():
             prompt = f.readline()
 
         if color:
-            color_id = random.randint(len(color_list)-1)
+            color_id = random.randint(0,len(color_list)-1)
 
             work_space = 'results/control3d_' + color_list[color_id] + '_' + prompt + '_' + folder + '_' + str(histo_count[folder])
 

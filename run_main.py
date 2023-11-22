@@ -4,6 +4,7 @@ import sys
 import argparse
 import shutil
 from tqdm import tqdm
+import random
 
 def doArgs(argList):
     parser = argparse.ArgumentParser()
@@ -11,6 +12,7 @@ def doArgs(argList):
     #parser.add_argument('-v', "--verbose", action="store_true", help="Enable verbose debugging", default=False)
     parser.add_argument('--job_num',type=int, help="Input file name", required=True)
     # parser.add_argument('--output', action="store", dest="outputFn", type=str, help="Output file name", required=True)
+    parser.add_argument('--color', type=str, help="whether to add color string", default=False)
 
     return parser.parse_args(argList)
 
@@ -19,7 +21,8 @@ def main():
     args = doArgs(sys.argv[1:])
     count = 0
     job_num = args.job_num
-
+    color = args.color
+    color_list = ['black', 'white', 'red', 'green', 'yellow', 'blue', 'brown', 'orange', 'pink', 'purple' ,'grey']
     histo_count = {}
     folders = '/yuch_ws/zero123/objaverse-rendering/views_shape'
     good_path = '/yuch_ws/zero123/zero123/good_samples.json'
@@ -43,6 +46,10 @@ def main():
 
         with open(prompt_path, 'r') as f:
             prompt = f.readline()
+
+        if color:
+            color_id = random.randint(len(color_list)-1)
+            prompt = color_list[color_id] + ' ' + prompt
         work_space = 'results/control3d_' + prompt + '_'+ folder + '_'+ str(histo_count[folder])
         iters = 10000
 

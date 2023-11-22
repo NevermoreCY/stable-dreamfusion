@@ -370,7 +370,9 @@ class Trainer(object):
                     self.embeddings['IF'][d] = self.guidance['IF'].get_text_embeds([f"{self.opt.text}, {d} view"])
 
             if 'clip' in self.guidance:
-                self.embeddings['clip']['text'] = self.guidance['clip'].get_text_embeds(self.opt.text)
+                # note here we want to use opt.control_text instead of opt.text
+                # self.embeddings['clip']['text'] = self.guidance['clip'].get_text_embeds(self.opt.text)
+                self.embeddings['clip']['text'] = self.guidance['clip'].get_text_embeds(self.opt.control_text)
 
         if self.opt.images is not None:
 
@@ -435,9 +437,10 @@ class Trainer(object):
                     'text_prompt': [text_prompt]
 
                 }
-
-            if 'clip' in self.guidance:
-                self.embeddings['clip']['image'] = self.guidance['clip'].get_img_embeds(self.rgb)
+            print("******currently we ignore clip loss for input image from user~")
+            # if 'clip' in self.guidance:
+            #     # here self.rgb is the rgb image given by user, not from nerf
+            #     self.embeddings['clip']['image'] = self.guidance['clip'].get_img_embeds(self.rgb)
 
 
     def __del__(self):
@@ -698,7 +701,7 @@ class Trainer(object):
                                                                   as_latent=as_latent, grad_scale=self.opt.lambda_guidance, save_guidance_path=save_guidance_path)
 
             if 'clip' in self.guidance:
-
+                print("****** clip is in guidance, clip loss will be counted towards total loss")
                 # empirical, far view should apply smaller CLIP loss
                 lambda_guidance = 10 * (1 - abs(azimuth) / 180) * self.opt.lambda_guidance
 

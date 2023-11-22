@@ -282,6 +282,7 @@ class Zero123(nn.Module):
         # kiui.vis.plot_image(pred_rgb_256, imgs)
 
         if save_guidance_path:
+
             with torch.no_grad():
                 if as_latent:
                     pred_rgb_256 = self.decode_latents(latents) # claforte: test!
@@ -293,8 +294,12 @@ class Zero123(nn.Module):
                 result_noisier_image = self.decode_latents(latents_noisy)
 
                 # TODO: also denoise all-the-way
-
+                # TODO: add an extra image for angles
                 # all 3 input images are [1, 3, H, W], e.g. [1, 3, 512, 512]
+
+                # 1:  rgb image , looking at the nerf object
+                # 2:  decode (rgb image ->latent  + noise)
+                # 3: decode ( model( latent  + noise , t ,noise_pred )  )
                 viz_images = torch.cat([pred_rgb_256, result_noisier_image, result_hopefully_less_noisy_image],dim=-1)
                 save_image(viz_images, save_guidance_path)
 

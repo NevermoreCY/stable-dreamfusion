@@ -44,7 +44,7 @@ class CLIP(nn.Module):
         image_z = image_z / image_z.norm(dim=-1, keepdim=True) # normalize features
 
         loss = 0
-        print('\n\n****** clip_z is ', clip_z)
+        # print('\n\n****** clip_z is ', clip_z)
         if 'image' in clip_z:
             print('\n\n****** image in clip_z' )
             loss -= ((image_z * clip_z['image']).sum(-1) * grad_scale).mean()

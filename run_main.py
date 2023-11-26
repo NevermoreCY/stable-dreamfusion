@@ -13,7 +13,7 @@ def doArgs(argList):
     parser.add_argument('--job_num',type=int, help="Input file name", required=True)
     # parser.add_argument('--output', action="store", dest="outputFn", type=str, help="Output file name", required=True)
     parser.add_argument('--color', type=str, help="whether to add color string", default=False)
-    parser.add_argument('--exp_name', type=str, help="the experiment name", default=False)
+    parser.add_argument('--exp_name', type=int, help="Temporary test code, 0 means zero123, 1 means zero123+clip, 2 means zero123+IF, 3 means +clip+IF", default=False)
 
     parser.add_argument('--total_num', type=int, help="whether to add color string", required=True)
 
@@ -29,6 +29,19 @@ def main():
     histo_count = {}
     folders = '/yuch_ws/zero123/objaverse-rendering/views_shape'
     good_path = '/yuch_ws/zero123/zero123/good_samples.json'
+
+    exp_name_str = ''
+
+    if exp_name == 0:
+        exp_name_str = ''
+    elif exp_name == 1:
+        exp_name_str = 'clip'
+    elif exp_name == 2:
+        exp_name_str = 'IF'
+    elif exp_name == 3:
+        exp_name_str = 'clip+IF'
+
+
 
     total_num = args.total_num
 
@@ -64,14 +77,14 @@ def main():
         if color:
             color_id = random.randint(0,len(color_list)-1)
 
-            work_space = 'results/control3d_' + color_list[color_id] + '_' + prompt + '_' + folder + '_' + exp_name + str(histo_count[folder])
+            work_space = 'results/control3d_' + color_list[color_id] + '_' + prompt + '_' + folder + '_' + exp_name_str + str(histo_count[folder])
             # histo_count[folder] += 1
 
             prompt = color_list[color_id] + ' ' + prompt
 
             # train
             train_cmd = ('python3 main.py -O --image ' + img_path + ' --workspace ' + work_space + ' --iters ' + str(
-                iters) +
+                iters) + ' --exp_names ' + str(exp_name) +
                          ' --control_text ' +'\"'+ prompt + '\"' + ' --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 100 --eval_interval 5')
 
             print('****** Train cmd is ', train_cmd)
@@ -84,9 +97,9 @@ def main():
             os.system(test_cmd)
         else:
 
-            work_space = 'results/control3d_' + prompt + '_'+ folder +  '_' + exp_name + str(histo_count[folder])
+            work_space = 'results/control3d_' + prompt + '_'+ folder +  '_' + exp_name_str + str(histo_count[folder])
             # train
-            train_cmd = ('python3 main.py -O --image '+ img_path + ' --workspace ' + work_space+ ' --iters ' + str(iters) +
+            train_cmd = ('python3 main.py -O --image '+ img_path + ' --workspace ' + work_space+ ' --iters ' + str(iters) + ' --exp_names ' + str(exp_name) +
                    ' --control_text ' + prompt + ' --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 100 --eval_interval 5')
 
             print('****** Train cmd is ', train_cmd)

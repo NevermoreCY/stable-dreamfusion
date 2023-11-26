@@ -708,7 +708,8 @@ class Trainer(object):
             if 'clip' in self.guidance:
                 # print("****** clip is in guidance, clip loss will be counted towards total loss")
                 # empirical, far view should apply smaller CLIP loss
-                lambda_guidance = 10 * (1 - abs(azimuth) / 180) * self.opt.lambda_guidance
+                # lambda_guidance = 10 * (1 - abs(azimuth) / 180) * self.opt.lambda_guidance
+                lambda_guidance = 10* self.opt.lambda_guidance
 
                 # self.embeddings['clip']
                 clip_loss = self.guidance['clip'].train_step(self.embeddings['clip'], pred_rgb, grad_scale=lambda_guidance)

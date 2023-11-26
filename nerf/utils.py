@@ -716,7 +716,7 @@ class Trainer(object):
                 print("\n **** cur lambda guidance is ", lambda_guidance)
                 # self.embeddings['clip']
                 clip_loss = self.guidance['clip'].train_step(self.embeddings['clip'], pred_rgb, grad_scale=lambda_guidance)
-                # print("cur loss : ", loss, 'Clip loss :', clip_loss)
+                print("cur loss : ", loss, 'Clip loss :', clip_loss)
                 loss = loss + clip_loss
 
         # regularizations

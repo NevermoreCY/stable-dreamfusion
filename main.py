@@ -170,6 +170,8 @@ if __name__ == '__main__':
     parser.add_argument('--exp_start_iter', type=int, default=None, help="start iter # for experiment, to calculate progressive_view and progressive_level")
     parser.add_argument('--exp_end_iter', type=int, default=None, help="end iter # for experiment, to calculate progressive_view and progressive_level")
 
+    parser.add_argument('--exp_names', type=int, default=0,
+                        help="Temporary test code, 0 means zero123, 1 means zero123+clip, 2 means zero123+IF, 3means +clip+IF")
     opt = parser.parse_args()
 
     if opt.O:
@@ -198,7 +200,17 @@ if __name__ == '__main__':
 
         if opt.text is None:
             # use zero123 guidance model when only providing image
-            opt.guidance = ['zero123','clip']
+            print('\n\n *** opt exp names are ', opt.exp_names)
+            opt.guidance = ['zero123']
+            if opt.exp_names == 1:
+                opt.guidance = ['zero123', 'clip']
+            elif opt.exp_names == 2:
+                opt.guidance = ['zero123', 'IF']
+            elif opt.exp_names == 3:
+                opt.guidance = ['zero123', 'clip' , 'IF']
+
+
+
             print("****** Current opt.guidance is ", opt.guidance)
             if not opt.dont_override_stuff:
                 opt.fovy_range = [opt.default_fovy, opt.default_fovy] # fix fov as zero123 doesn't support changing fov

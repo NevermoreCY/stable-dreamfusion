@@ -353,6 +353,12 @@ class Trainer(object):
     def prepare_embeddings(self):
 
         # text embeddings (stable-diffusion)
+        # now we could have clip in both cases
+        if 'clip' in self.guidance:
+            # note here we want to use opt.control_text instead of opt.text
+            # self.embeddings['clip']['text'] = self.guidance['clip'].get_text_embeds(self.opt.text)
+            self.embeddings['clip']['text'] = self.guidance['clip'].get_text_embeds(self.opt.control_text)
+
         if self.opt.text is not None:
 
             if 'SD' in self.guidance:
@@ -369,10 +375,7 @@ class Trainer(object):
                 for d in ['front', 'side', 'back']:
                     self.embeddings['IF'][d] = self.guidance['IF'].get_text_embeds([f"{self.opt.text}, {d} view"])
 
-            if 'clip' in self.guidance:
-                # note here we want to use opt.control_text instead of opt.text
-                # self.embeddings['clip']['text'] = self.guidance['clip'].get_text_embeds(self.opt.text)
-                self.embeddings['clip']['text'] = self.guidance['clip'].get_text_embeds(self.opt.control_text)
+
 
         if self.opt.images is not None:
 
@@ -704,6 +707,8 @@ class Trainer(object):
                 print("****** clip is in guidance, clip loss will be counted towards total loss")
                 # empirical, far view should apply smaller CLIP loss
                 lambda_guidance = 10 * (1 - abs(azimuth) / 180) * self.opt.lambda_guidance
+
+                self.embeddings['clip']
                 clip_loss = self.guidance['clip'].train_step(self.embeddings['clip'], pred_rgb, grad_scale=lambda_guidance)
                 print("cur loss : ", loss, 'Clip loss :', clip_loss)
                 loss = loss + clip_loss

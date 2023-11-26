@@ -711,6 +711,7 @@ class Trainer(object):
                 # lambda_guidance = 10 * (1 - abs(azimuth) / 180) * self.opt.lambda_guidance
                 lambda_guidance = 10* self.opt.lambda_guidance
 
+                print("\n **** cur lambda guidance is ", lambda_guidance)
                 # self.embeddings['clip']
                 clip_loss = self.guidance['clip'].train_step(self.embeddings['clip'], pred_rgb, grad_scale=lambda_guidance)
                 # print("cur loss : ", loss, 'Clip loss :', clip_loss)

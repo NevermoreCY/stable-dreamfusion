@@ -87,7 +87,7 @@ def main():
 
             # train
             train_cmd = ('python3 main.py -O --image ' + img_path + ' --workspace ' + work_space + ' --iters ' + str(
-                iters) + ' --exp_names ' + str(exp_name) + ' --lambda_guidance' + str(lambda_guidance) +
+                iters) + ' --exp_names ' + str(exp_name) + ' --lambda_guidance ' + str(lambda_guidance) +
                          ' --control_text ' +'\"'+ prompt + '\"' + ' --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 100 --eval_interval 5')
 
             print('****** Train cmd is ', train_cmd)
@@ -103,7 +103,7 @@ def main():
             work_space = 'results/control3d_' + prompt + '_'+ folder +  '_' + 'lam'+ str(lambda_guidance)+'_'+ exp_name_str + str(histo_count[folder])
             # train
             train_cmd = ('python3 main.py -O --image '+ img_path + ' --workspace ' + work_space+ ' --iters ' + str(
-                iters) + ' --exp_names ' + str(exp_name) + ' --lambda_guidance' + str(lambda_guidance) +
+                iters) + ' --exp_names ' + str(exp_name) + ' --lambda_guidance ' + str(lambda_guidance) +
                    ' --control_text ' + prompt + ' --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 100 --eval_interval 5')
 
             print('****** Train cmd is ', train_cmd)

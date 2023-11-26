@@ -174,6 +174,10 @@ if __name__ == '__main__':
                         help="Temporary test code, 0 means zero123, 1 means zero123+clip, 2 means zero123+IF, 3means +clip+IF")
     opt = parser.parse_args()
 
+    from huggingface_hub import login
+    hf_token = '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'
+    login(token=hf_token)
+
     if opt.O:
         opt.fp16 = True
         opt.cuda_ray = True

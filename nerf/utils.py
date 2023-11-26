@@ -359,6 +359,13 @@ class Trainer(object):
             # self.embeddings['clip']['text'] = self.guidance['clip'].get_text_embeds(self.opt.text)
             self.embeddings['clip']['text'] = self.guidance['clip'].get_text_embeds(self.opt.control_text)
 
+        if 'IF' in self.guidance:
+            self.embeddings['IF']['default'] = self.guidance['IF'].get_text_embeds([self.opt.control_text])
+            self.embeddings['IF']['uncond'] = self.guidance['IF'].get_text_embeds([self.opt.negative])
+
+            for d in ['front', 'side', 'back']:
+                self.embeddings['IF'][d] = self.guidance['IF'].get_text_embeds([f"{self.opt.control_text}, {d} view"])
+
         if self.opt.text is not None:
 
             if 'SD' in self.guidance:
@@ -368,12 +375,7 @@ class Trainer(object):
                 for d in ['front', 'side', 'back']:
                     self.embeddings['SD'][d] = self.guidance['SD'].get_text_embeds([f"{self.opt.text}, {d} view"])
 
-            if 'IF' in self.guidance:
-                self.embeddings['IF']['default'] = self.guidance['IF'].get_text_embeds([self.opt.text])
-                self.embeddings['IF']['uncond'] = self.guidance['IF'].get_text_embeds([self.opt.negative])
 
-                for d in ['front', 'side', 'back']:
-                    self.embeddings['IF'][d] = self.guidance['IF'].get_text_embeds([f"{self.opt.text}, {d} view"])
 
 
 
@@ -704,13 +706,13 @@ class Trainer(object):
                                                                   as_latent=as_latent, grad_scale=self.opt.lambda_guidance, save_guidance_path=save_guidance_path)
 
             if 'clip' in self.guidance:
-                print("****** clip is in guidance, clip loss will be counted towards total loss")
+                # print("****** clip is in guidance, clip loss will be counted towards total loss")
                 # empirical, far view should apply smaller CLIP loss
                 lambda_guidance = 10 * (1 - abs(azimuth) / 180) * self.opt.lambda_guidance
 
-                self.embeddings['clip']
+                # self.embeddings['clip']
                 clip_loss = self.guidance['clip'].train_step(self.embeddings['clip'], pred_rgb, grad_scale=lambda_guidance)
-                print("cur loss : ", loss, 'Clip loss :', clip_loss)
+                # print("cur loss : ", loss, 'Clip loss :', clip_loss)
                 loss = loss + clip_loss
 
         # regularizations

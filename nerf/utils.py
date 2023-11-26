@@ -695,7 +695,7 @@ class Trainer(object):
                     loss = loss + self.guidance['IF'].train_step_perpneg(text_z, weights, pred_rgb, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
                 else:
                     IF_loss = self.guidance['IF'].train_step(text_z, pred_rgb, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
-                    print("cur loss : ", loss, 'Clip loss :', IF_loss , 'lam:', self.opt.lambda_guidance)
+                    print("cur loss : ", loss, 'IF loss :', IF_loss , 'lam:', self.opt.lambda_guidance)
                     loss = loss + IF_loss
                     
             if 'zero123' in self.guidance:

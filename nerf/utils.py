@@ -387,6 +387,7 @@ class Trainer(object):
             # load processed image
             # for image in self.opt.images:
             #     assert image.endswith('_rgba.png') # the rest of this code assumes that the _rgba image has been passed.
+            # this should be control images
             rgbs = [cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB) for image in self.opt.images]
             # rgba_hw = np.stack([cv2.resize(rgba, (w, h), interpolation=cv2.INTER_AREA).astype(np.float32) / 255 for rgba in rgbas])
             # rgb_hw = rgba_hw[..., :3] * rgba_hw[..., 3:] + (1 - rgba_hw[..., 3:])
@@ -695,7 +696,7 @@ class Trainer(object):
                     loss = loss + self.guidance['IF'].train_step_perpneg(text_z, weights, pred_rgb, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
                 else:
                     IF_loss = self.guidance['IF'].train_step(text_z, pred_rgb, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
-                    print("cur loss : ", loss, 'IF loss :', IF_loss , 'lam:', self.opt.lambda_guidance)
+                    print("cur loss : ", loss, 'IF loss :', IF_loss , 'lam:', self.opt.if_guide_scale)
                     loss = loss + IF_loss
                     
             if 'zero123' in self.guidance:
@@ -704,15 +705,17 @@ class Trainer(object):
                 azimuth = data['azimuth']
                 radius = data['radius']
 
-                loss = loss + self.guidance['zero123'].train_step(self.embeddings['zero123']['default'], pred_rgb, polar, azimuth, radius, guidance_scale=self.opt.guidance_scale,
-                                                                  as_latent=as_latent, grad_scale=self.opt.lambda_guidance, save_guidance_path=save_guidance_path)
+                print('&&& Default zero123 grad scale:' , self.opt.lambda_guidance, ' guidance scale: ',self.opt.guidance_scale )
+
+                loss = loss + self.guidance['zero123'].train_step(self.embeddings['zero123']['default'], pred_rgb, polar, azimuth, radius, guidance_scale=self.opt.zero_123_guide_scale,
+                                                                  as_latent=as_latent, grad_scale=self.opt.zero_grad_scale, save_guidance_path=save_guidance_path)
 
             if 'clip' in self.guidance:
                 # print("****** clip is in guidance, clip loss will be counted towards total loss")
                 # empirical, far view should apply smaller CLIP loss
-                # lambda_guidance = 10 * (1 - abs(azimuth) / 180) * self.opt.lambda_guidance
-                lambda_guidance = 10* self.opt.lambda_guidance
-
+                lambda_guidance = 10 * (1 - abs(azimuth) / 180) * self.opt.clip_grad_scale
+                # lambda_guidance = 10* self.opt.lambda_guidance
+                print('&&& Default clip grad scale:',self.opt.lambda_guidance, lambda_guidance )
                 print("\n **** cur lambda guidance is ", lambda_guidance)
                 # self.embeddings['clip']
                 clip_loss = self.guidance['clip'].train_step(self.embeddings['clip'], pred_rgb, grad_scale=lambda_guidance)

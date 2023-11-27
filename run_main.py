@@ -43,7 +43,7 @@ def main():
     folders = '/yuch_ws/zero123/objaverse-rendering/views_shape'
     good_path = '/yuch_ws/zero123/zero123/good_samples.json'
 
-    lambda_guidance = args.lambda_guidance
+    # lambda_guidance = args.lambda_guidance
 
 
     exp_name_str = ''

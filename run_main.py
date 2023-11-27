@@ -17,7 +17,7 @@ def doArgs(argList):
     parser.add_argument('--zero123_guidance', type=float, help="whether to add color string", default=1)
     parser.add_argument('--clip_guidance', type=float, help="whether to add color string", default=1)
     parser.add_argument('--if_guidance', type=float, help="whether to add color string", default=1)
-    parser.add_argument('--zero123_grad_scale', type=float, help="whether to add color string", default=1)
+    parser.add_argument('--zero123_grad_scale', type=str, help="whether to add color string", default='None')
     parser.add_argument('--clip_grad_scale', type=float, help="whether to add color string", default=1)
     parser.add_argument('--if_grad_scale', type=float, help="whether to add color string", default=1)
     parser.add_argument('--total_num', type=int, help="whether to add color string", required=True)

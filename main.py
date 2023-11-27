@@ -172,11 +172,32 @@ if __name__ == '__main__':
 
     parser.add_argument('--exp_names', type=int, default=0,
                         help="Temporary test code, 0 means zero123, 1 means zero123+clip, 2 means zero123+IF, 3means +clip+IF")
+
+    parser.add_argument('--zero_123_guide_scale', type=float, default=1,
+                        help="zero123_guide")
+    parser.add_argument('--clip_guide_scale', type=float, default=1,
+                        help="Temporary test code, 0 means zero123, 1 means zero123+clip, 2 means zero123+IF, 3means +clip+IF")
+    parser.add_argument('--if_guide_scale', type=float, default=1,
+                        help="Temporary test code, 0 means zero123, 1 means zero123+clip, 2 means zero123+IF, 3means +clip+IF")
+
+    parser.add_argument('--zero_123_grad_scale', type=float, default=1,
+                        help="zero123_guide")
+    parser.add_argument('--clip_grad_scale', type=float, default=1,
+                        help="Temporary test code, 0 means zero123, 1 means zero123+clip, 2 means zero123+IF, 3means +clip+IF")
+    parser.add_argument('--if_grad_scale', type=float, default=1,
+                        help="Temporary test code, 0 means zero123, 1 means zero123+clip, 2 means zero123+IF, 3means +clip+IF")
     opt = parser.parse_args()
 
     from huggingface_hub import login
     hf_token = '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'
     login(token=hf_token)
+
+    print("****** Check guidance scales,  zero_123_guide_scale: ", opt.zero_123_guide_scale, "  clip_guide_scale: ", opt.clip_guide_scale
+          , " if_guide_scale : ", opt.if_guide_scale )
+
+    print("****** Check guidance scales,  zero_123_grad_scale: ", opt.zero_123_grad_scale, "  clip_grad_scale: ",
+          opt.clip_grad_scale
+          , " if_grad_scale : ", opt.if_grad_scale)
 
     if opt.O:
         opt.fp16 = True

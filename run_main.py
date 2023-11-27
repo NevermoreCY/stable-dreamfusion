@@ -17,6 +17,9 @@ def doArgs(argList):
     parser.add_argument('--zero123_guidance', type=float, help="whether to add color string", default=1)
     parser.add_argument('--clip_guidance', type=float, help="whether to add color string", default=1)
     parser.add_argument('--if_guidance', type=float, help="whether to add color string", default=1)
+    parser.add_argument('--zero123_grad_scale', type=float, help="whether to add color string", default=1)
+    parser.add_argument('--clip_grad_scale', type=float, help="whether to add color string", default=1)
+    parser.add_argument('--if_grad_scale', type=float, help="whether to add color string", default=1)
     parser.add_argument('--total_num', type=int, help="whether to add color string", required=True)
 
     return parser.parse_args(argList)
@@ -30,6 +33,10 @@ def main():
     clip_guidance = args.clip_guidance
     zero123_guidance = args.zero123_guidance
     if_guidance = args.if_guidance
+
+    clip_grad_scale = args.clip_grad_scale
+    zero123_grad_scale = args.zero123_grad_scale
+    if_grad_scale = args.if_grad_scale
 
     color_list = ['black', 'white', 'red', 'green', 'yellow', 'blue', 'brown', 'orange', 'pink', 'purple' ,'grey','silver','golden']
     histo_count = {}
@@ -87,7 +94,8 @@ def main():
             color_id = random.randint(0,len(color_list)-1)
 
             work_space = ('results/control3d_' + color_list[color_id] + '_' + prompt + '_'
-                          + folder + '_' + 'C_I_Z_'+ str(clip_guidance)+'_'+ str(if_guidance)+'_'+ str(zero123_guidance)+'_' + exp_name_str + str(histo_count[folder]))
+                          + folder + '_' + 'guide_'+ str(clip_guidance)+'_'+ str(if_guidance)+'_'+ str(zero123_guidance)+'_'
+                          +'grad_'+ str(clip_grad_scale)+'_'+ str(if_grad_scale)+'_'+ str(zero123_grad_scale)+'_'+ exp_name_str + str(histo_count[folder]))
             # histo_count[folder] += 1
 
             prompt = color_list[color_id] + ' ' + prompt
@@ -96,6 +104,8 @@ def main():
             train_cmd = ('python3 main.py -O --image ' + img_path + ' --workspace ' + work_space + ' --iters ' + str(
                 iters) + ' --exp_names ' + str(exp_name) + ' --clip_guidance ' + str(clip_guidance)+
                          ' --if_guidance ' + str(if_guidance) + ' --zero123_guidance ' + str(zero123_guidance) +
+                         ' --clip_grad_scale ' + str(clip_grad_scale)+
+                         ' --if_grad_scale ' + str(if_grad_scale) + ' --zero123_grad_scale ' + str(zero123_grad_scale) +
                          ' --control_text ' +'\"'+ prompt + '\"' + ' --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 100 --eval_interval 5')
 
             print('****** Train cmd is ', train_cmd)
@@ -108,11 +118,14 @@ def main():
             os.system(test_cmd)
         else:
 
-            work_space = 'results/control3d_' + prompt + '_'+ folder +  '_' + 'C_I_Z_'+ str(clip_guidance)+'_'+ str(if_guidance)+'_'+ str(zero123_guidance)+'_'+ exp_name_str + str(histo_count[folder])
+            work_space = ('results/control3d_' + prompt + '_'+ folder +  '_' + 'guide_'+ str(clip_guidance)+'_'+ str(if_guidance)+'_'+ str(zero123_guidance)+'_'
+                          + 'grad_'+ str(clip_grad_scale)+'_'+ str(if_grad_scale)+'_'+ str(zero123_grad_scale)+'_'+ exp_name_str + str(histo_count[folder]))
             # train
             train_cmd = ('python3 main.py -O --image '+ img_path + ' --workspace ' + work_space+ ' --iters ' + str(
                 iters) + ' --exp_names ' + str(exp_name)  + ' --clip_guidance ' + str(clip_guidance)+
                          ' --if_guidance ' + str(if_guidance) + ' --zero123_guidance ' + str(zero123_guidance) +
+                         ' --clip_grad_scale ' + str(clip_grad_scale) +
+                         ' --if_grad_scale ' + str(if_grad_scale) + ' --zero123_grad_scale ' + str(zero123_grad_scale) +
                    ' --control_text ' + prompt + ' --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 100 --eval_interval 5')
 
             print('****** Train cmd is ', train_cmd)

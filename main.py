@@ -175,13 +175,14 @@ if __name__ == '__main__':
 
     parser.add_argument('--zero_123_guide_scale', type=float, default=1,
                         help="zero123_guide")
+
     parser.add_argument('--clip_guide_scale', type=float, default=1,
                         help="Temporary test code, 0 means zero123, 1 means zero123+clip, 2 means zero123+IF, 3means +clip+IF")
     parser.add_argument('--if_guide_scale', type=float, default=1,
                         help="Temporary test code, 0 means zero123, 1 means zero123+clip, 2 means zero123+IF, 3means +clip+IF")
 
-    parser.add_argument('--zero_123_grad_scale', type=float, default=1,
-                        help="zero123_guide")
+    # parser.add_argument('--zero_123_grad_scale', type=float, default=1,
+    #                     help="zero123_guide")
     parser.add_argument('--clip_grad_scale', type=float, default=1,
                         help="Temporary test code, 0 means zero123, 1 means zero123+clip, 2 means zero123+IF, 3means +clip+IF")
     parser.add_argument('--if_grad_scale', type=float, default=1,

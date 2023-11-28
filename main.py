@@ -196,7 +196,7 @@ if __name__ == '__main__':
     print("****** Check guidance scales,  zero123_guide_scale: ", opt.zero123_guide_scale, "  clip_guide_scale: ", opt.clip_guide_scale
           , " if_guide_scale : ", opt.if_guide_scale )
 
-    print("****** Check guidance scales,  zero_123_grad_scale: ", opt.zero_123_grad_scale, "  clip_grad_scale: ",
+    print("****** Check guidance scales,  zero_123_grad_scale: ", opt.zero123_grad_scale, "  clip_grad_scale: ",
           opt.clip_grad_scale
           , " if_grad_scale : ", opt.if_grad_scale)
 

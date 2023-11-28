@@ -193,7 +193,7 @@ if __name__ == '__main__':
     hf_token = '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'
     login(token=hf_token)
 
-    print("****** Check guidance scales,  zero_123_guide_scale: ", opt.zero_123_guide_scale, "  clip_guide_scale: ", opt.clip_guide_scale
+    print("****** Check guidance scales,  zero123_guide_scale: ", opt.zero123_guide_scale, "  clip_guide_scale: ", opt.clip_guide_scale
           , " if_guide_scale : ", opt.if_guide_scale )
 
     print("****** Check guidance scales,  zero_123_grad_scale: ", opt.zero_123_grad_scale, "  clip_grad_scale: ",

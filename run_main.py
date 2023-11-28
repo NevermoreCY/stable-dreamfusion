@@ -102,8 +102,8 @@ def main():
 
             # train
             train_cmd = ('python3 main.py -O --image ' + img_path + ' --workspace ' + work_space + ' --iters ' + str(
-                iters) + ' --exp_names ' + str(exp_name) + ' --clip_guidance ' + str(clip_guidance)+
-                         ' --if_guidance ' + str(if_guidance) + ' --zero123_guidance ' + str(zero123_guidance) +
+                iters) + ' --exp_names ' + str(exp_name) + ' --clip_guid_scale ' + str(clip_guidance)+
+                         ' --if_guid_scale ' + str(if_guidance) + ' --zero123_guid_scale ' + str(zero123_guidance) +
                          ' --clip_grad_scale ' + str(clip_grad_scale)+
                          ' --if_grad_scale ' + str(if_grad_scale) + ' --zero123_grad_scale ' + str(zero123_grad_scale) +
                          ' --control_text ' +'\"'+ prompt + '\"' + ' --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 100 --eval_interval 5')
@@ -122,8 +122,8 @@ def main():
                           + 'grad_'+ str(clip_grad_scale)+'_'+ str(if_grad_scale)+'_'+ str(zero123_grad_scale)+'_'+ exp_name_str + str(histo_count[folder]))
             # train
             train_cmd = ('python3 main.py -O --image '+ img_path + ' --workspace ' + work_space+ ' --iters ' + str(
-                iters) + ' --exp_names ' + str(exp_name)  + ' --clip_guidance ' + str(clip_guidance)+
-                         ' --if_guidance ' + str(if_guidance) + ' --zero123_guidance ' + str(zero123_guidance) +
+                iters) + ' --exp_names ' + str(exp_name)  + ' --clip_guid_scale ' + str(clip_guidance)+
+                         ' --if_guid_scale ' + str(if_guidance) + ' --zero123_guid_scale ' + str(zero123_guidance) +
                          ' --clip_grad_scale ' + str(clip_grad_scale) +
                          ' --if_grad_scale ' + str(if_grad_scale) + ' --zero123_grad_scale ' + str(zero123_grad_scale) +
                    ' --control_text ' + prompt + ' --zero123_ckpt pretrained/zero123/control_3d.ckpt --save_guidance --save_guidance_interval 100 --eval_interval 5')

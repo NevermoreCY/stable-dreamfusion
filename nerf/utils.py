@@ -708,7 +708,7 @@ class Trainer(object):
                 print('&&& Default zero123 grad scale:' , self.opt.lambda_guidance, ' guidance scale: ',self.opt.guidance_scale )
 
                 loss = loss + self.guidance['zero123'].train_step(self.embeddings['zero123']['default'], pred_rgb, polar, azimuth, radius, guidance_scale=self.opt.zero123_guide_scale,
-                                                                  as_latent=as_latent, grad_scale=self.opt.zero_grad_scale, save_guidance_path=save_guidance_path)
+                                                                  as_latent=as_latent, grad_scale=self.opt.zero123_grad_scale, save_guidance_path=save_guidance_path)
 
             if 'clip' in self.guidance:
                 # print("****** clip is in guidance, clip loss will be counted towards total loss")

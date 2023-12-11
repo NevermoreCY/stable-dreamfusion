@@ -457,5 +457,5 @@ if __name__ == '__main__':
             if opt.save_mesh:
                 trainer.save_mesh()
 
-            guidance['clip'].save_log()
+            # guidance['clip'].save_log()
 

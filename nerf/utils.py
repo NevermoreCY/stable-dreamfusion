@@ -389,9 +389,11 @@ class Trainer(object):
             #     assert image.endswith('_rgba.png') # the rest of this code assumes that the _rgba image has been passed.
             # this should be control images
             rgbs = [cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB) for image in self.opt.images]
-            # rgba_hw = np.stack([cv2.resize(rgba, (w, h), interpolation=cv2.INTER_AREA).astype(np.float32) / 255 for rgba in rgbas])
+
+            rgbs_ref = [cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB) for image in self.opt.images_ref]
+            rgb_ref_hw = np.stack([cv2.resize(rgba, (w, h), interpolation=cv2.INTER_AREA).astype(np.float32) / 255 for rgba in rgbs_ref])
             # rgb_hw = rgba_hw[..., :3] * rgba_hw[..., 3:] + (1 - rgba_hw[..., 3:])
-            # self.rgb = torch.from_numpy(rgb_hw).permute(0,3,1,2).contiguous().to(self.device)
+            self.rgb_ref = torch.from_numpy(rgb_ref_hw).permute(0,3,1,2).contiguous().to(self.device)
             # self.mask = torch.from_numpy(rgba_hw[..., 3] > 0.5).to(self.device)
             # print(f'[INFO] dataset: load image prompt {self.opt.images} {self.rgb.shape}')
 
@@ -443,10 +445,10 @@ class Trainer(object):
                     'text_prompt': [text_prompt]
 
                 }
-            print("******currently we ignore clip loss for input image from user~")
-            # if 'clip' in self.guidance:
-            #     # here self.rgb is the rgb image given by user, not from nerf
-            #     self.embeddings['clip']['image'] = self.guidance['clip'].get_img_embeds(self.rgb)
+                print("******currently we ignore clip loss for input image from user~")
+                # if 'clip' in self.guidance:
+                #     # here self.rgb is the rgb image given by user, not from nerf
+                self.embeddings['clip']['image_ref'] = self.guidance['clip'].get_img_embeds(self.rgb_ref)
 
 
     def __del__(self):

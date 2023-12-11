@@ -700,8 +700,8 @@ class Trainer(object):
                     loss_rgb_text = self.guidance['IF'].train_step(text_z, pred_rgb, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
                     loss_ref_text = self.guidance['IF'].train_step(text_z, self.rgb_ref, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
 
-                    IF_loss = self.guidance['IF'].train_step(text_z, pred_rgb, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
-                    print("cur loss : ", loss, 'IF loss :', IF_loss , 'lam:', self.opt.if_guide_scale)
+                    # IF_loss = self.guidance['IF'].train_step(text_z, pred_rgb, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
+                    # print("cur loss : ", loss, 'IF loss :', IF_loss , 'lam:', self.opt.if_guide_scale)
                     print("\n\n\n\ *** IF rgb_text_loss : ", loss_rgb_text ,  "\n\n\n\ *** IF ref_text_loss : ", loss_ref_text)
                     # loss = loss + IF_loss
                     

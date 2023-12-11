@@ -30,6 +30,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', default=None)
 
     parser.add_argument('--image', default=None, help="image prompt")
+    parser.add_argument('--image_ref', default=None, help="image reference prompt")
     parser.add_argument('--image_config', default=None, help="image config csv")
 
     parser.add_argument('--known_view_interval', type=int, default=4, help="train default view with RGB loss every & iters, only valid if --image is not None.")
@@ -216,6 +217,7 @@ if __name__ == '__main__':
         opt.latent_iter_ratio = 0 # must not do as_latent
 
     opt.images, opt.ref_radii, opt.ref_polars, opt.ref_azimuths, opt.zero123_ws = [], [], [], [], []
+    opt.images_ref = []
     opt.default_zero123_w = 1
 
     opt.exp_start_iter = opt.exp_start_iter or 0
@@ -268,6 +270,7 @@ if __name__ == '__main__':
 
         if opt.image is not None:
             opt.images += [opt.image]
+            opt.image_ref += [opt.image_ref]
             opt.ref_radii += [opt.default_radius]
             opt.ref_polars += [opt.default_polar]
             opt.ref_azimuths += [opt.default_azimuth]
@@ -453,3 +456,6 @@ if __name__ == '__main__':
 
             if opt.save_mesh:
                 trainer.save_mesh()
+
+            guidance['clip'].save_log()
+

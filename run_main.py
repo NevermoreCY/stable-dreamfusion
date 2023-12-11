@@ -82,6 +82,7 @@ def main():
     for folder in folder_list:
 
         img_path = folders + '/' + folder + '/' + 'canny.png'
+        ref_path = folders + '/' + folder + '/' + '000.png'
         prompt_path = folders + '/' + folder + '/' + 'BLIP_best_text_v2.txt'
 
         with open(prompt_path, 'r') as f:
@@ -101,7 +102,7 @@ def main():
             prompt = color_list[color_id] + ' ' + prompt
 
             # train
-            train_cmd = ('python3 main.py -O --image ' + img_path + ' --workspace ' + work_space + ' --iters ' + str(
+            train_cmd = ('python3 main.py -O --image ' + img_path + ' --image_ref ' + ref_path + ' --workspace ' + work_space + ' --iters ' + str(
                 iters) + ' --exp_names ' + str(exp_name) + ' --clip_guide_scale ' + str(clip_guidance)+
                          ' --if_guide_scale ' + str(if_guidance) + ' --zero123_guide_scale ' + str(zero123_guidance) +
                          ' --clip_grad_scale ' + str(clip_grad_scale)+
@@ -121,7 +122,7 @@ def main():
             work_space = ('results/control3d_' + prompt + '_'+ folder +  '_' + 'guide_'+ str(clip_guidance)+'_'+ str(if_guidance)+'_'+ str(zero123_guidance)+'_'
                           + 'grad_'+ str(clip_grad_scale)+'_'+ str(if_grad_scale)+'_'+ str(zero123_grad_scale)+'_'+ exp_name_str + str(histo_count[folder]))
             # train
-            train_cmd = ('python3 main.py -O --image '+ img_path + ' --workspace ' + work_space+ ' --iters ' + str(
+            train_cmd = ('python3 main.py -O --image '+ img_path + ' --image_ref ' + ref_path + ' --workspace ' + work_space+ ' --iters ' + str(
                 iters) + ' --exp_names ' + str(exp_name)  + ' --clip_guide_scale ' + str(clip_guidance)+
                          ' --if_guide_scale ' + str(if_guidance) + ' --zero123_guide_scale ' + str(zero123_guidance) +
                          ' --clip_grad_scale ' + str(clip_grad_scale) +

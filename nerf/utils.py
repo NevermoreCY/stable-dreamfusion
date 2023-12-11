@@ -697,13 +697,13 @@ class Trainer(object):
                 if self.opt.perpneg:
                     loss = loss + self.guidance['IF'].train_step_perpneg(text_z, weights, pred_rgb, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
                 else:
-                    loss_rgb_text = self.guidance['IF'].train_step(text_z, pred_rgb, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
-                    loss_ref_text = self.guidance['IF'].train_step(text_z, self.rgb_ref, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
+                    # loss_rgb_text = self.guidance['IF'].train_step(text_z, pred_rgb, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
+                    # loss_ref_text = self.guidance['IF'].train_step(text_z, self.rgb_ref, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
 
-                    # IF_loss = self.guidance['IF'].train_step(text_z, pred_rgb, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
-                    # print("cur loss : ", loss, 'IF loss :', IF_loss , 'lam:', self.opt.if_guide_scale)
-                    print("\n\n\n\ *** IF rgb_text_loss : ", loss_rgb_text ,  "\n\n\n\ *** IF ref_text_loss : ", loss_ref_text)
-                    # loss = loss + IF_loss
+                    IF_loss = self.guidance['IF'].train_step(text_z, pred_rgb, guidance_scale=self.opt.guidance_scale, grad_scale=self.opt.lambda_guidance)
+                    print("cur loss : ", loss, 'IF loss :', IF_loss , 'lam:', self.opt.if_guide_scale)
+                    # print("\n\n\n\ *** IF rgb_text_loss : ", loss_rgb_text ,  "\n\n\n\ *** IF ref_text_loss : ", loss_ref_text)
+                    loss = loss + IF_loss
                     
             if 'zero123' in self.guidance:
 
@@ -727,7 +727,7 @@ class Trainer(object):
                 clip_loss = self.guidance['clip'].train_step(self.embeddings['clip'], pred_rgb, grad_scale=lambda_guidance)
                 print("cur loss : ", loss, 'Clip loss :', clip_loss)
                 print("Not adding clip loss to total loss since we just want the score")
-                # loss = loss + clip_loss
+                loss = loss + clip_loss
 
         # regularizations
         if not self.opt.dmtet:

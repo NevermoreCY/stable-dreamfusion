@@ -270,7 +270,7 @@ if __name__ == '__main__':
 
         if opt.image is not None:
             opt.images += [opt.image]
-            opt.image_ref += [opt.image_ref]
+            opt.images_ref += [opt.image_ref]
             opt.ref_radii += [opt.default_radius]
             opt.ref_polars += [opt.default_polar]
             opt.ref_azimuths += [opt.default_azimuth]

@@ -46,9 +46,16 @@ class CLIP(nn.Module):
         loss = 0
         # print('\n\n****** clip_z is ', clip_z)
         if 'image' in clip_z:
-            print('\n\n****** image in clip_z' )
+            # print('\n\n****** image in clip_z' )
             loss -= ((image_z * clip_z['image']).sum(-1) * grad_scale).mean()
-        
+
+        if 'text' in clip_z and 'image_ref':
+            loss_text = ((image_z * clip_z['text']).sum(-1)).mean()
+            loss_image_ref = ((image_z * clip_z['image_ref']).sum(-1)).mean()
+            loss_ref_text = ((clip_z['image_ref'] * clip_z['text']).sum(-1)).mean()
+            print('\n\n\n &&&& similarity between render and text: ', loss_text, 'similarity between render and image_ref: ', loss_image_ref
+                  , 'similarity between image_ref and text: ', loss_ref_text )
+
         if 'text' in clip_z:
             print('\n\n****** text in clip_z')
             loss -= ((image_z * clip_z['text']).sum(-1) * grad_scale).mean()
